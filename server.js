@@ -280,12 +280,14 @@ app.post('/api/session/restore', (req, res) => {
 
 app.get('/api/status', async (req, res) => {
   if (USE_GROQ) return res.json({ backend: 'groq', ready: true });
+  // debug: show whether env var is present at all
+  const hasKey = !!(process.env.GROQ_API_KEY);
   try {
     const r    = await fetch(`${OLLAMA_BASE}/api/tags`, { signal: AbortSignal.timeout(2000) });
     const data = await r.json();
-    res.json({ backend: 'ollama', ready: true, models: (data.models || []).map(m => m.name) });
+    res.json({ backend: 'ollama', ready: true, models: (data.models || []).map(m => m.name), hasGroqKey: hasKey });
   } catch (_) {
-    res.json({ backend: 'ollama', ready: false, models: [] });
+    res.json({ backend: 'ollama', ready: false, models: [], hasGroqKey: hasKey });
   }
 });
 
