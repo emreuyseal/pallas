@@ -1,10 +1,12 @@
 {
   "name": "pallas",
   "version": "1.0.0",
-  "description": "Pallas — a local-feel AI assistant prototype with live web search",
-  "main": "server.js",
+  "description": "Pallas — local AI assistant",
+  "main": "electron/main.js",
   "scripts": {
-    "start": "node server.js"
+    "start":    "node server.js",
+    "electron": "electron .",
+    "dist":     "electron-builder --win"
   },
   "engines": {
     "node": ">=18"
@@ -14,5 +16,36 @@
     "cheerio": "^1.0.0",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "electron":         "^42.5.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId":       "com.pallas.app",
+    "productName": "Pallas",
+    "copyright":   "© 2025 Pallas",
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon":   "public/logo.png"
+    },
+    "nsis": {
+      "oneClick":                           false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut":              true,
+      "createStartMenuShortcut":            true
+    },
+    "files": [
+      "electron/**",
+      "server.js",
+      "public/**",
+      "node_modules/**",
+      "!node_modules/electron{,-builder,-winstaller,-updater,-download}/**",
+      "!website/**",
+      "!data/**",
+      "!*.bat",
+      "!.git/**"
+    ],
+    "asar": true
   }
 }

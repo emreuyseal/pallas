@@ -30,7 +30,7 @@ const BROWSER_UA =
   '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 // ── Data storage ──────────────────────────────────────────────────────────────
-const DATA_DIR   = path.join(__dirname, 'data');
+const DATA_DIR   = process.env.PALLAS_DATA || path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHATS_DIR  = path.join(DATA_DIR, 'chats');
 
