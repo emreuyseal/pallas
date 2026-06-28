@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pallas — Yerel Yapay Zeka</title>
+<link rel="icon" href="/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -512,6 +513,142 @@
     .sidebar.open{transform:translateX(0);}
     .welcome-title{font-size:22px;}
   }
+
+  /* ═══════════ Flashy visual overrides ═══════════ */
+
+  /* Smooth app entrance */
+  .app{animation:appEnter .45s cubic-bezier(.22,1,.36,1);}
+  @keyframes appEnter{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Gradient brand name */
+  .brand-name{
+    background:linear-gradient(135deg,#fcd98a 0%,#e3a857 45%,#c88b30 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .auth-brand-name{
+    background:linear-gradient(135deg,#fcd98a 0%,#e3a857 45%,#c88b30 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    font-size:24px;
+  }
+
+  /* Glowing brand mark */
+  .brand-mark{filter:drop-shadow(0 0 7px rgba(227,168,87,.55));}
+
+  /* Glass header */
+  .header{
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    background:rgba(21,22,26,.80);
+    border-bottom-color:rgba(227,168,87,.1);
+  }
+
+  /* Gradient + glowing send button */
+  .send-btn:not(:disabled){
+    background:linear-gradient(135deg,#f7bb55 0%,#e3a857 55%,#c88b30 100%);
+    box-shadow:0 2px 16px rgba(227,168,87,.45);
+    transition:box-shadow .2s,transform .15s;
+  }
+  .send-btn:not(:disabled):hover{
+    box-shadow:0 4px 24px rgba(227,168,87,.65);transform:translateY(-1px);
+  }
+  .send-btn:not(:disabled):active{transform:translateY(0);}
+
+  /* Input glow on focus */
+  .input-bar:focus-within{
+    border-color:var(--accent-dim);
+    box-shadow:0 0 0 3px rgba(227,168,87,.12),0 4px 20px rgba(0,0,0,.3);
+  }
+  .auth-input:focus{
+    border-color:var(--accent-dim);
+    box-shadow:0 0 0 3px rgba(227,168,87,.12);
+  }
+
+  /* Pulsing status dot */
+  @keyframes pulse-ring{
+    0%,100%{box-shadow:0 0 0 3px rgba(111,174,139,.15);}
+    50%{box-shadow:0 0 0 8px rgba(111,174,139,.04);}
+  }
+  .status-dot{animation:pulse-ring 2.4s ease-in-out infinite;}
+
+  /* Sidebar gradient */
+  .sidebar{background:linear-gradient(180deg,#1f2128 0%,#1c1e23 100%);}
+
+  /* Glowing model card */
+  .model-card{
+    border-color:rgba(227,168,87,.15);
+    box-shadow:0 4px 20px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .model-option.active{
+    background:linear-gradient(135deg,rgba(58,47,34,.95),rgba(42,33,22,.6));
+    border-color:rgba(227,168,87,.4);
+    box-shadow:0 0 14px rgba(227,168,87,.15);
+  }
+
+  /* New chat button glow */
+  .new-chat-btn:hover{box-shadow:0 0 18px rgba(227,168,87,.2);}
+
+  /* Amber thinking dots */
+  .thinking-dot{
+    background:var(--accent);
+    box-shadow:0 0 6px rgba(227,168,87,.5);
+  }
+
+  /* Enhanced auth card */
+  .auth-card{
+    background:linear-gradient(160deg,#22242d 0%,#1c1e25 100%);
+    border-color:rgba(227,168,87,.2);
+    box-shadow:
+      0 32px 80px rgba(0,0,0,.7),
+      0 0 0 1px rgba(227,168,87,.08),
+      inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .auth-screen{
+    background:radial-gradient(ellipse at 50% 40%,rgba(30,25,15,.9) 0%,#15161a 70%);
+  }
+
+  /* Auth logo */
+  .auth-logo{
+    width:110px;height:110px;
+    object-fit:contain;
+    border-radius:18px;
+    mix-blend-mode:screen;
+    filter:sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.1) drop-shadow(0 0 22px rgba(227,168,87,.75));
+    margin-bottom:8px;
+    display:block;
+  }
+  .auth-brand{flex-direction:column;align-items:flex-start;gap:4px;}
+
+  /* Gradient auth button */
+  .auth-btn{
+    background:linear-gradient(135deg,#f7bb55 0%,#e3a857 55%,#c88b30 100%);
+    box-shadow:0 4px 22px rgba(227,168,87,.4);
+    transition:box-shadow .2s,transform .15s,opacity .15s;
+  }
+  .auth-btn:hover:not(:disabled){
+    box-shadow:0 6px 32px rgba(227,168,87,.55);transform:translateY(-1px);
+  }
+  .auth-btn:active:not(:disabled){transform:translateY(0);}
+
+  /* User bubble glow */
+  .msg-user .bubble{box-shadow:0 2px 14px rgba(227,168,87,.1);}
+
+  /* History active glow */
+  .history-entry.active{
+    background:linear-gradient(135deg,rgba(58,47,34,.9),rgba(42,33,22,.5));
+    box-shadow:inset 0 0 0 1px rgba(227,168,87,.18);
+  }
+
+  /* Chip hover glow */
+  .chip:hover{box-shadow:0 0 12px rgba(227,168,87,.12);}
+
+  /* Compute gauge fill glow */
+  .gauge-fill{box-shadow:0 0 6px rgba(227,168,87,.3);}
+  .gauge-fill.cpu{box-shadow:0 0 6px rgba(143,166,216,.3);}
+
+  /* Welcome title gradient */
+  .welcome-title{
+    background:linear-gradient(135deg,#edeae3 0%,#fcd98a 60%,#e3a857 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
 </style>
 </head>
 <body>
@@ -520,10 +657,7 @@
 <div class="auth-screen" id="authScreen">
   <div class="auth-card">
     <div class="auth-brand">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-        <rect x="3" y="3" width="18" height="18" rx="5"/>
-        <rect x="9.5" y="9.5" width="5" height="5" rx="1.2" fill="currentColor" stroke="none"/>
-      </svg>
+      <img src="/logo.png" class="auth-logo" alt="Pallas"/>
       <span class="auth-brand-name">Pallas</span>
     </div>
     <h2 class="auth-title" id="authTitle">Hoş geldin</h2>
