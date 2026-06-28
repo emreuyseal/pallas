@@ -541,8 +541,12 @@
     font-size:24px;
   }
 
-  /* Glowing brand mark */
-  .brand-mark{filter:drop-shadow(0 0 7px rgba(227,168,87,.55));}
+  /* Header logo */
+  .header-logo{
+    height:28px;width:auto;
+    mix-blend-mode:screen;
+    filter:sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.05) drop-shadow(0 0 8px rgba(227,168,87,.45));
+  }
 
   /* Glass header */
   .header{
@@ -699,11 +703,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="brand">
-        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <rect x="3" y="3" width="18" height="18" rx="5"/>
-          <rect x="9.5" y="9.5" width="5" height="5" rx="1.2" fill="currentColor" stroke="none"/>
-        </svg>
-        <span class="brand-name">Pallas</span>
+        <img src="/logo.png" class="header-logo" alt="Pallas">
       </div>
     </div>
     <div class="status-pill" title="Pallas yanıt üretmek için web'de arar.">
@@ -799,13 +799,13 @@
       <div class="thread" id="thread">
         <div class="thread-inner" id="threadInner">
           <div class="welcome" id="welcome">
-            <h1 class="welcome-title" id="welcomeTitle">Pallas'a istediğini sor.</h1>
-            <p class="welcome-sub" id="welcomeSub">Pallas çoğu işi bu cihazda yapar; yanıt vermek için gerektiğinde canlı olarak web'de arama yapar.</p>
+            <h1 class="welcome-title" id="welcomeTitle">ne konuşalım bugün?</h1>
+            <p class="welcome-sub" id="welcomeSub">pallas cihazında çalışır — hızlı, özel ve çevrimdışı.</p>
             <div class="chips">
-              <button class="chip" data-text="Yeni bir kahve markası için isim önerileri verir misin?">Fikir üret</button>
-              <button class="chip" data-text="E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?">Kod yaz</button>
-              <button class="chip" data-text="Bugün dolar kuru ne kadar?">Güncel bilgi ara</button>
-              <button class="chip" data-text="Selam, nasıl çalışıyorsun?">Sadece sohbet et</button>
+              <button class="chip" data-text="Yeni bir kahve markası için isim önerileri verir misin?">fikir ver bana</button>
+              <button class="chip" data-text="E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?">kod yaz</button>
+              <button class="chip" data-text="Bugün dolar kuru ne kadar?">ne oluyor dünyada</button>
+              <button class="chip" data-text="Selam, nasıl çalışıyorsun?">sadece sohbet</button>
             </div>
           </div>
         </div>
@@ -849,27 +849,27 @@
       memoryLabel:'Bellek', cpuLabel:'İşlemci', diskLabel:'Diskteki model',
       newChat:'Yeni sohbet',
       historyEyebrow:'Geçmiş',
-      historyEmpty:'Kaydedilen sohbetler burada görünecek',
-      sidebarFooter:'Pallas, sana yanıt verebilmek için sorgularını web\'de arar. Sohbet geçmişin hesabına kaydedilir.',
-      welcomeTitle:'Pallas\'a istediğini sor.',
-      welcomeSub:'Pallas çoğu işi bu cihazda yapar; yanıt vermek için gerektiğinde canlı olarak web\'de arama yapar.',
+      historyEmpty:'henüz bir sohbet yok',
+      sidebarFooter:'her şey bilgisayarında çalışıyor. sohbetlerin burada kalır.',
+      welcomeTitle:'ne konuşalım bugün?',
+      welcomeSub:'pallas cihazında çalışır — hızlı, özel ve çevrimdışı. bir şeyler sor, bir şeyler yap.',
       chips:[
-        {label:'Fikir üret',      text:'Yeni bir kahve markası için isim önerileri verir misin?'},
-        {label:'Kod yaz',         text:'E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?'},
-        {label:'Güncel bilgi ara',text:'Bugün dolar kuru ne kadar?'},
-        {label:'Sadece sohbet et',text:'Selam, nasıl çalışıyorsun?'},
+        {label:'fikir ver bana',   text:'Yeni bir kahve markası için isim önerileri verir misin?'},
+        {label:'kod yaz',          text:'E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?'},
+        {label:'ne oluyor dünyada',text:'Bugün dolar kuru ne kadar?'},
+        {label:'sadece sohbet',    text:'Selam, nasıl çalışıyorsun?'},
       ],
-      placeholder:'Pallas\'a mesaj yaz…',
+      placeholder:'bir şeyler yaz…',
       composerNote:'Yanıtlar, web\'de yapılan canlı bir aramayla oluşturuluyor.',
-      sourcesLabel:'Kaynaklar',
-      ollamaError:'Yapay zeka modeli hazır değil. Lütfen birkaç saniye bekleyip tekrar dene.',
-      genericError:'Bir hata oluştu. Sunucu çalışıyor mu kontrol eder misin?',
-      noAnswer:'Yanıt alınamadı.',
+      sourcesLabel:'kaynaklar',
+      ollamaError:'model hazırlanıyor, bir saniyen var mı? birkaç saniye bekleyip tekrar dene.',
+      genericError:'bir şeyler ters gitti. sunucu hâlâ çalışıyor mu?',
+      noAnswer:'bir şey gelmedi. tekrar dener misin?',
       modelBlurbs:{mini:'En hızlı — her dizüstü bilgisayarda çalışır', standard:'Dengeli — iyi bir varsayılan', pro:'En yetenekli — 16GB+ RAM gerektirir'},
       modelSwitchPace:{mini:'yanıtlar daha hızlı gelir.', standard:'hız ve detay arasında bir denge sağlar.', pro:'yanıtlar biraz daha yavaş gelir.'},
       modelSwitchMsg:(name,size,pace)=>`${name} (${size}) modeline geçildi — ${pace}`,
-      authWelcome:'Hoş geldin',
-      authSub:'Sohbet geçmişini kaydetmek için giriş yap',
+      authWelcome:'hey, hoş geldin 👋',
+      authSub:'sohbetlerini kaydetmek için giriş yap ya da hesap aç',
       authTabSignin:'Giriş yap',
       authTabRegister:'Hesap oluştur',
       authUserPlaceholder:'Kullanıcı adı',
@@ -899,27 +899,27 @@
       memoryLabel:'Memory', cpuLabel:'CPU', diskLabel:'Model on disk',
       newChat:'New chat',
       historyEyebrow:'History',
-      historyEmpty:'Saved chats will appear here',
-      sidebarFooter:'Pallas searches the web to answer you. Your chat history is saved to your account.',
-      welcomeTitle:'Ask Pallas anything.',
-      welcomeSub:'Pallas runs most things on this device, and searches the web live when needed.',
+      historyEmpty:'nothing here yet',
+      sidebarFooter:'everything runs on your computer. your chats stay here.',
+      welcomeTitle:'what\'s on your mind?',
+      welcomeSub:'pallas runs on your device — fast, private, no cloud. just ask it stuff.',
       chips:[
-        {label:'Generate ideas',      text:'Can you suggest names for a new coffee brand?'},
-        {label:'Write code',          text:'Can you write a function that validates email addresses?'},
-        {label:'Search current info', text:'What is the dollar exchange rate today?'},
-        {label:'Just chat',           text:'Hey, how do you work?'},
+        {label:'give me ideas',    text:'Can you suggest names for a new coffee brand?'},
+        {label:'write some code',  text:'Can you write a function that validates email addresses?'},
+        {label:'what\'s going on', text:'What is the dollar exchange rate today?'},
+        {label:'just talk',        text:'Hey, how do you work?'},
       ],
-      placeholder:'Message Pallas…',
+      placeholder:'say something…',
       composerNote:'Answers are generated with a live web search.',
-      sourcesLabel:'Sources',
-      ollamaError:'The AI model isn\'t ready. Please wait a moment and try again.',
-      genericError:'Something went wrong. Is the server running?',
-      noAnswer:'No response received.',
+      sourcesLabel:'sources',
+      ollamaError:'model\'s warming up — give it a sec and try again.',
+      genericError:'something went wrong. is the server still running?',
+      noAnswer:'got nothing back. try again?',
       modelBlurbs:{mini:'Fastest — runs on any laptop', standard:'Balanced — a good default', pro:'Most capable — requires 16GB+ RAM'},
       modelSwitchPace:{mini:'responses will be faster.', standard:'balances speed and detail.', pro:'responses will be a bit slower.'},
       modelSwitchMsg:(name,size,pace)=>`Switched to ${name} (${size}) — ${pace}`,
-      authWelcome:'Welcome',
-      authSub:'Sign in to save your chat history',
+      authWelcome:'hey, welcome 👋',
+      authSub:'sign in or make an account to save your chats',
       authTabSignin:'Sign in',
       authTabRegister:'Create account',
       authUserPlaceholder:'Username',
@@ -1480,15 +1480,15 @@
   }
 
   /* ---------- Chat API ---------- */
-  async function fetchChatResponse(query, modelId, sid, retrying = false){
+  async function fetchChatResponse(query, modelId, sid, attempt = 0, onRetry = null){
     const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}&search=${useWebSearch}`;
     const res = await fetch(url);
     if (!res.ok && res.status !== 503) throw new Error('chat_failed');
     const data = await res.json();
-    // Auto-retry once if Ollama was cold-starting
-    if (data.error === 'ollama_unavailable' && !retrying){
-      await new Promise(r => setTimeout(r, 4000));
-      return fetchChatResponse(query, modelId, sid, true);
+    if (data.error === 'ollama_unavailable' && attempt < 5){
+      if (onRetry) onRetry(attempt + 1);
+      await new Promise(r => setTimeout(r, 5000));
+      return fetchChatResponse(query, modelId, sid, attempt + 1, onRetry);
     }
     return data;
   }
@@ -1547,7 +1547,9 @@
     const startTime = performance.now();
     const minDelay  = currentModel.minDelay;
 
-    fetchChatResponse(text, currentModel.id, sessionId)
+    fetchChatResponse(text, currentModel.id, sessionId, 0, (attempt) => {
+      tb.innerHTML = `<span style="font-size:11.5px;opacity:.7">warming up model… (${attempt}/5)</span>`;
+    })
       .then(data => {
         const elapsed = performance.now() - startTime;
         const wait    = Math.max(0, minDelay - elapsed);
