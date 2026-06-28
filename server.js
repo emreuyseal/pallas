@@ -135,6 +135,11 @@ async function aiChat(modelId, messages) {
   return ollamaChat(OLLAMA_MODELS[modelId] || OLLAMA_MODELS.standard, messages);
 }
 
+function stripCJK(text) {
+  // Remove stray CJK characters that qwen sometimes bleeds into responses
+  return text.replace(/[　-鿿가-힯豈-﫿]/g, '').replace(/ {2,}/g, ' ').trim();
+}
+
 function isConversational(q) {
   return /^(merhaba|selam|hey|hi|hello|nasıl(sın)?|naber|ne haber|teşekkür|sağ ol|günaydın|iyi günler|iyi akşamlar|görüşürüz|hoşça kal|bye)\b/i.test(q.trim());
 }
@@ -239,8 +244,8 @@ app.get('/api/chat', async (req, res) => {
   }
 
   let system = lang === 'en'
-    ? 'You are Pallas, a helpful AI assistant. Always respond in English only. Be natural, concise, and clear. You can use markdown when helpful.'
-    : 'Sen Pallas adlı bir yapay zeka asistanısın. Her zaman yalnızca Türkçe yanıt ver. Başka dil kullanma. Doğal, kısa ve net konuş. Gerektiğinde markdown kullanabilirsin.';
+    ? 'You are Pallas, a helpful AI assistant. Respond in English ONLY. Never output Chinese, Japanese, Korean, or any non-Latin characters under any circumstances — not even a single character. If you notice yourself about to write a non-Latin character, stop and write in English instead. Be natural, concise, and clear. You can use markdown when helpful.'
+    : 'Sen Pallas adlı bir yapay zeka asistanısın. YALNIZCA Türkçe yanıt ver. Hiçbir durumda Çince, Japonca, Korece veya Latin alfabesi dışı karakter kullanma — tek bir karakter bile olsa. Yanıtında Çince karakter görürsen dur ve Türkçe yaz. Doğal, kısa ve net konuş. Gerektiğinde markdown kullanabilirsin.';
   if (results.length > 0) {
     const ctx = results.map((r, i) => `[${i + 1}] ${r.title}\n${r.snippet}`).join('\n\n');
     system += `\n\nAşağıdaki güncel web arama sonuçlarını yanıtında kullan:\n\n${ctx}`;
@@ -253,7 +258,8 @@ app.get('/api/chat', async (req, res) => {
   ];
 
   try {
-    const text = await aiChat(modelId, messages);
+    const raw  = await aiChat(modelId, messages);
+    const text = stripCJK(raw);
     if (sid) {
       history.push({ role: 'user', content: query });
       history.push({ role: 'assistant', content: text });
