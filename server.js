@@ -17,7 +17,7 @@ const OLLAMA_BASE  = process.env.OLLAMA_BASE || 'http://127.0.0.1:11434';
 const GROQ_MODELS = {
   mini:     'llama-3.1-8b-instant',
   standard: 'llama-3.3-70b-versatile',
-  pro:      'llama-3.3-70b-versatile',
+  pro:      'llama-3.3-70b-specdec',
 };
 const OLLAMA_MODELS = {
   mini:     'qwen2.5:7b',
@@ -64,6 +64,13 @@ function getPayload(req) {
 const sessions   = new Map();
 const MAX_HISTORY = 16;
 
+// Never cache the HTML file so the browser always gets fresh JS
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
