@@ -259,7 +259,8 @@ app.get('/api/chat', async (req, res) => {
     res.json({ text, results });
   } catch (err) {
     console.error('AI error:', err.message);
-    res.status(503).json({ error: 'ollama_unavailable', results });
+    const errCode = USE_GROQ ? 'groq_unavailable' : 'ollama_unavailable';
+    res.status(503).json({ error: errCode, results });
   }
 });
 

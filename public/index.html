@@ -1485,6 +1485,7 @@
     const res = await fetch(url);
     if (!res.ok && res.status !== 503) throw new Error('chat_failed');
     const data = await res.json();
+    // Retry on Ollama cold-start only (not Groq errors)
     if (data.error === 'ollama_unavailable' && attempt < 5){
       if (onRetry) onRetry(attempt + 1);
       await new Promise(r => setTimeout(r, 5000));
@@ -1503,6 +1504,9 @@
   function buildResponseHtml(data){
     if (data.error === 'ollama_unavailable'){
       return `<div class="search-error">${t('ollamaError')}</div>`;
+    }
+    if (data.error === 'groq_unavailable'){
+      return `<div class="search-error">${lang==='tr' ? 'AI servisi şu an yanıt vermiyor. Biraz bekleyip tekrar dene.' : 'AI service isn\'t responding right now. Try again in a moment.'}</div>`;
     }
     let html = '';
     if (data.text){
