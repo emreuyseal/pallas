@@ -403,6 +403,16 @@
   .send-btn{width:32px;height:32px;flex-shrink:0;border:none;border-radius:10px;background:var(--accent);color:#1a1408;display:flex;align-items:center;justify-content:center;}
   .send-btn:disabled{background:var(--bg-elevated-2);color:var(--text-tertiary);}
   .send-btn svg{width:15px;height:15px;}
+  .web-search-btn{
+    width:30px;height:30px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:none;
+    color:var(--accent);border-radius:8px;
+    transition:color .15s,background .15s;
+  }
+  .web-search-btn:hover{background:var(--bg-elevated-2);}
+  .web-search-btn.off{color:var(--text-tertiary);}
+  .web-search-btn svg{width:16px;height:16px;}
   .composer-note{text-align:center;font-size:10.5px;color:var(--text-tertiary);margin-top:9px;}
 
   /* ---------- Toast ---------- */
@@ -805,6 +815,9 @@
         <div class="composer">
           <div class="input-bar">
             <textarea class="composer-input" id="composerInput" placeholder="Pallas'a mesaj yaz…" rows="1"></textarea>
+            <button class="web-search-btn" id="webSearchBtn" type="button" title="Web araması">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </button>
             <button class="send-btn" id="sendBtn" disabled aria-label="Mesaj gönder">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
             </button>
@@ -930,9 +943,9 @@
 
   /* ---------- Models ---------- */
   const MODELS = [
-    {id:'mini',     name:'Pallas 1',       size:'1B', ramIdle:18, ramActive:34, cpuIdle:4,  cpuActive:42, disk:'0.6 GB', minDelay:250},
-    {id:'standard', name:'Pallas 1.1',     size:'3B', ramIdle:29, ramActive:57, cpuIdle:6,  cpuActive:72, disk:'1.8 GB', minDelay:500},
-    {id:'pro',      name:'Pallas 1.2 Max', size:'8B', ramIdle:41, ramActive:83, cpuIdle:9,  cpuActive:95, disk:'4.7 GB', minDelay:900},
+    {id:'mini',     name:'Pallas 1',       size:'3B', ollamaModel:'llama3.2:3b',  ramIdle:12, ramActive:28, cpuIdle:4,  cpuActive:38, disk:'1.9 GB', minDelay:200},
+    {id:'standard', name:'Pallas 1.1',     size:'7B', ollamaModel:'qwen2.5:7b',   ramIdle:29, ramActive:57, cpuIdle:6,  cpuActive:72, disk:'4.4 GB', minDelay:400},
+    {id:'pro',      name:'Pallas 1.2 Max', size:'7B', ollamaModel:'qwen2.5:7b',   ramIdle:29, ramActive:57, cpuIdle:6,  cpuActive:72, disk:'4.4 GB', minDelay:400},
   ];
 
   let currentModel    = MODELS[1];
@@ -940,7 +953,8 @@
   let activeHistoryId = null;
   let messageCount    = 0;
   let sessionId       = newSessionId();
-  let clientSession   = []; // mirrors server-side session for save/restore
+  let clientSession   = [];
+  let useWebSearch    = false; // off by default — local AI first
 
   /* ---------- Auth state ---------- */
   let authToken   = localStorage.getItem('pallas-token') || null;
@@ -1315,6 +1329,7 @@
     lang = lang === 'tr' ? 'en' : 'tr';
     localStorage.setItem('pallas-lang', lang);
     applyLang();
+    updateComposerNote();
   });
 
   /* ---------- Compute gauges (cosmetic) ---------- */
@@ -1357,6 +1372,7 @@
     renderModelOptions();
     setGauges(false);
     modelCard.classList.remove('open');
+    updateComposerNote();
     if (changed && messageCount > 0){
       addSystemMessage(t('modelSwitchMsg')(m.name, m.size, t('modelSwitchPace')[m.id]));
     }
@@ -1464,11 +1480,17 @@
   }
 
   /* ---------- Chat API ---------- */
-  async function fetchChatResponse(query, modelId, sid){
-    const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}`;
+  async function fetchChatResponse(query, modelId, sid, retrying = false){
+    const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}&search=${useWebSearch}`;
     const res = await fetch(url);
     if (!res.ok && res.status !== 503) throw new Error('chat_failed');
-    return res.json();
+    const data = await res.json();
+    // Auto-retry once if Ollama was cold-starting
+    if (data.error === 'ollama_unavailable' && !retrying){
+      await new Promise(r => setTimeout(r, 4000));
+      return fetchChatResponse(query, modelId, sid, true);
+    }
+    return data;
   }
 
   function renderMarkdown(text){
@@ -1603,6 +1625,29 @@
     messageCount    = 0;
     activeHistoryId = null;
     renderHistory();
+  }
+
+  /* ---------- Web search toggle ---------- */
+  const webSearchBtn = el('webSearchBtn');
+  webSearchBtn.classList.add('off'); // starts off
+  webSearchBtn.addEventListener('click', () => {
+    useWebSearch = !useWebSearch;
+    webSearchBtn.classList.toggle('off', !useWebSearch);
+    webSearchBtn.title = useWebSearch
+      ? (lang === 'tr' ? 'Web araması açık — kapat' : 'Web search on — click to disable')
+      : (lang === 'tr' ? 'Web araması kapalı — aç' : 'Web search off — click to enable');
+    updateComposerNote();
+  });
+
+  function updateComposerNote(){
+    const note = el('composerNote');
+    if (useWebSearch){
+      note.textContent = t('composerNote');
+    } else {
+      note.textContent = lang === 'tr'
+        ? `${currentModel.ollamaModel} · cihazında çalışıyor`
+        : `${currentModel.ollamaModel} · running on your device`;
+    }
   }
 
   el('newChatBtn').addEventListener('click', resetThread);

@@ -20,7 +20,7 @@ const GROQ_MODELS = {
   pro:      'llama-3.3-70b-specdec',
 };
 const OLLAMA_MODELS = {
-  mini:     'qwen2.5:7b',
+  mini:     'llama3.2:3b',
   standard: 'qwen2.5:7b',
   pro:      'qwen2.5:7b',
 };
@@ -230,7 +230,8 @@ app.get('/api/chat', async (req, res) => {
   const history = sid ? sessions.get(sid) : [];
 
   let results = [];
-  if (!isConversational(query)) {
+  const doSearch = req.query.search !== 'false';
+  if (doSearch && !isConversational(query)) {
     try { results = await webSearch(query); } catch (_) {}
   }
 
@@ -289,4 +290,19 @@ app.get('/api/status', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Pallas çalışıyor: http://localhost:${PORT}`);
+  if (!USE_GROQ) warmupOllama();
 });
+
+async function warmupOllama() {
+  try {
+    await fetch(`${OLLAMA_BASE}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: OLLAMA_MODELS.standard, prompt: '', stream: false }),
+      signal: AbortSignal.timeout(60000),
+    });
+    console.log('Model sıcak ve hazır.');
+  } catch (_) {
+    console.log('Ollama warmup atlandı (Ollama çalışmıyor olabilir).');
+  }
+}
