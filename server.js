@@ -122,7 +122,10 @@ async function groqChat(model, messages) {
     body: JSON.stringify({ model, messages }),
     signal: AbortSignal.timeout(30000),
   });
-  if (!res.ok) throw new Error(`groq_http_${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`groq_http_${res.status}: ${body.slice(0, 200)}`);
+  }
   const data = await res.json();
   return data.choices?.[0]?.message?.content || '';
 }
@@ -260,7 +263,7 @@ app.get('/api/chat', async (req, res) => {
   } catch (err) {
     console.error('AI error:', err.message);
     const errCode = USE_GROQ ? 'groq_unavailable' : 'ollama_unavailable';
-    res.status(503).json({ error: errCode, results });
+    res.status(503).json({ error: errCode, detail: err.message, results });
   }
 });
 
