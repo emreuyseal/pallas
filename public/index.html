@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pallas — Yerel Yapay Zeka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<style>
+  :root{
+    --bg-base:#15161a;
+    --bg-surface:#1c1e23;
+    --bg-elevated:#232529;
+    --bg-elevated-2:#2a2d32;
+    --border:#2b2d33;
+    --border-soft:#23252a;
+    --accent:#e3a857;
+    --accent-dim:#7a5c34;
+    --accent-soft:#3a2f22;
+    --text-primary:#edeae3;
+    --text-secondary:#90929a;
+    --text-tertiary:#5e6066;
+    --green:#6fae8b;
+    --radius:10px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg-base);
+    color:var(--text-primary);
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea{font-family:inherit;}
+  ::selection{background:var(--accent-soft);}
+
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  .app{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- Header ---------- */
+  .header{
+    height:56px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    border-bottom:1px solid var(--border-soft);
+    background:var(--bg-base);
+  }
+  .header-left{display:flex;align-items:center;gap:12px;}
+  .menu-btn{
+    display:none;
+    width:32px;height:32px;
+    align-items:center;justify-content:center;
+    background:transparent;border:none;color:var(--text-secondary);
+    border-radius:8px;
+  }
+  .menu-btn:hover{background:var(--bg-surface);color:var(--text-primary);}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-mark{width:24px;height:24px;color:var(--accent);flex-shrink:0;}
+  .brand-name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16.5px;
+    letter-spacing:-0.01em;
+  }
+  .status-pill{
+    display:flex;align-items:center;gap:7px;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--text-secondary);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
+    padding:5px 11px 5px 9px;
+    border-radius:99px;
+    cursor:default;
+  }
+  .status-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 0 3px rgba(111,174,139,0.15);
+  }
+  .header-right{display:flex;align-items:center;gap:8px;position:relative;}
+  .icon-btn{
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:none;color:var(--text-secondary);
+    border-radius:8px;
+  }
+  .icon-btn:hover{background:var(--bg-surface);color:var(--text-primary);}
+  .icon-btn svg{width:18px;height:18px;}
+  .lang-btn{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.05em;padding:0 9px;width:auto;}
+
+  .popover{
+    position:absolute;
+    top:42px;right:0;
+    width:248px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 12px 28px rgba(0,0,0,0.45);
+    padding:6px;
+    display:none;
+    z-index:40;
+  }
+  .popover.open{display:block;}
+  .popover-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 10px;
+    border-radius:7px;
+  }
+  .popover-row:hover{background:var(--bg-elevated-2);}
+  .popover-label{font-size:12.5px;color:var(--text-primary);}
+  .popover-sub{font-size:10.5px;color:var(--text-tertiary);margin-top:1px;}
+  .switch{
+    width:30px;height:18px;border-radius:99px;
+    background:var(--bg-base);border:1px solid var(--border);
+    position:relative;flex-shrink:0;margin-left:10px;
+    transition:background .15s ease;
+  }
+  .switch::after{
+    content:'';position:absolute;top:2px;left:2px;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--text-tertiary);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .switch.on{background:var(--accent-soft);border-color:var(--accent-dim);}
+  .switch.on::after{transform:translateX(12px);background:var(--accent);}
+  .switch.locked{opacity:0.5;cursor:not-allowed;}
+  .popover-divider{height:1px;background:var(--border-soft);margin:5px 4px;}
+  .lock-icon{width:11px;height:11px;color:var(--text-tertiary);margin-right:4px;vertical-align:-1px;}
+
+  /* ---------- Layout ---------- */
+  .layout{flex:1;display:flex;min-height:0;position:relative;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:272px;flex-shrink:0;
+    background:var(--bg-surface);
+    border-right:1px solid var(--border-soft);
+    display:flex;flex-direction:column;
+    overflow-y:auto;
+    padding:16px 14px 14px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    color:var(--text-tertiary);
+    text-transform:uppercase;
+    margin:4px 2px 9px;
+  }
+  .model-card{
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:11px 12px;
+    margin-bottom:18px;
+    position:relative;
+  }
+  .model-card-top{display:flex;align-items:flex-start;justify-content:space-between;cursor:pointer;}
+  .model-name{font-size:13px;font-weight:600;}
+  .model-size{
+    font-family:var(--font-mono);
+    color:var(--accent);
+    font-size:11px;
+    margin-left:5px;
+  }
+  .model-blurb{font-size:11.5px;color:var(--text-secondary);margin-top:3px;}
+  .chevron{width:14px;height:14px;color:var(--text-tertiary);flex-shrink:0;margin-top:2px;transition:transform .15s ease;}
+  .model-card.open .chevron{transform:rotate(180deg);}
+  .model-options{
+    margin-top:10px;padding-top:10px;
+    border-top:1px solid var(--border-soft);
+    display:none;
+    flex-direction:column;gap:4px;
+  }
+  .model-card.open .model-options{display:flex;}
+  .model-option{
+    display:flex;flex-direction:column;
+    padding:7px 8px;border-radius:7px;
+    background:transparent;border:1px solid transparent;
+    text-align:left;
+  }
+  .model-option:hover{background:var(--bg-elevated-2);}
+  .model-option.active{border-color:var(--accent-dim);background:var(--accent-soft);}
+  .model-option-top{display:flex;align-items:center;font-size:12px;font-weight:600;}
+  .model-option-blurb{font-size:10.5px;color:var(--text-secondary);margin-top:1px;}
+
+  .compute-panel{
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:13px 12px 12px;
+    margin-bottom:18px;
+  }
+  .compute-row{margin-bottom:10px;}
+  .compute-row:last-child{margin-bottom:0;}
+  .compute-label-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:5px;
+  }
+  .compute-label{font-size:11.5px;color:var(--text-secondary);}
+  .compute-value{font-family:var(--font-mono);font-size:11px;color:var(--text-primary);}
+  .gauge{height:5px;border-radius:99px;background:var(--bg-base);overflow:hidden;}
+  .gauge-fill{
+    height:100%;border-radius:99px;
+    background:var(--accent);
+    width:0%;
+    transition:width .7s cubic-bezier(.4,0,.2,1);
+  }
+  .gauge-fill.cpu{background:#8fa6d8;}
+  .disk-row{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11.5px;color:var(--text-secondary);
+    padding-top:8px;border-top:1px solid var(--border-soft);margin-top:10px;
+  }
+  .disk-value{font-family:var(--font-mono);color:var(--text-primary);font-size:11px;}
+
+  .new-chat-btn{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    width:100%;padding:9px 0;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    color:var(--text-primary);
+    font-size:12.5px;font-weight:500;
+    margin-bottom:14px;
+  }
+  .new-chat-btn:hover{background:var(--bg-elevated-2);border-color:var(--accent-dim);}
+  .new-chat-btn svg{width:14px;height:14px;color:var(--accent);}
+
+  .history-list{display:flex;flex-direction:column;gap:2px;}
+  .history-item{
+    padding:8px 9px;border-radius:7px;
+    font-size:12px;color:var(--text-secondary);
+    background:transparent;border:none;text-align:left;width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .history-item:hover{background:var(--bg-elevated);color:var(--text-primary);}
+  .history-item.active{background:var(--accent-soft);color:var(--text-primary);}
+  .history-empty{font-size:11.5px;color:var(--text-tertiary);padding:6px 9px;}
+
+  .sidebar-footer{
+    margin-top:auto;padding-top:14px;
+    font-size:10.5px;color:var(--text-tertiary);
+    line-height:1.5;
+  }
+
+  /* ---------- Main / Chat ---------- */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .thread{
+    flex:1;overflow-y:auto;
+    padding:28px 0 12px;
+    display:flex;flex-direction:column;
+    align-items:center;
+  }
+  .thread-inner{width:100%;max-width:640px;padding:0 22px;display:flex;flex-direction:column;flex:1;}
+
+  .welcome{
+    flex:1;display:flex;flex-direction:column;
+    align-items:flex-start;justify-content:center;
+    padding-bottom:30px;
+  }
+  .welcome-title{
+    font-family:var(--font-display);
+    font-size:27px;font-weight:600;letter-spacing:-0.01em;
+    margin:0 0 9px;
+  }
+  .welcome-sub{
+    font-size:13.5px;color:var(--text-secondary);
+    max-width:440px;margin:0 0 22px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:8px 13px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:99px;
+    font-size:12.5px;color:var(--text-primary);
+  }
+  .chip:hover{border-color:var(--accent-dim);background:var(--bg-elevated-2);}
+
+  .msg{
+    display:flex;flex-direction:column;
+    margin-bottom:18px;
+    max-width:88%;
+    animation:rise .25s ease;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .msg-user{align-self:flex-end;align-items:flex-end;}
+  .msg-assistant{align-self:flex-start;align-items:flex-start;}
+  .bubble{
+    padding:10px 14px;
+    border-radius:14px;
+    font-size:13.5px;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .msg-user .bubble{
+    background:var(--accent-soft);
+    border:1px solid var(--accent-dim);
+    border-bottom-right-radius:4px;
+  }
+  .msg-assistant .bubble{
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-bottom-left-radius:4px;
+    white-space:normal;
+  }
+  .bubble code, .bubble pre{
+    font-family:var(--font-mono);
+    font-size:12px;
+  }
+  .bubble pre{
+    background:var(--bg-base);
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    padding:10px 11px;
+    overflow-x:auto;
+    margin:8px 0 2px;
+    white-space:pre;
+  }
+  .msg-meta{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--text-tertiary);
+    margin-top:5px;
+    padding:0 3px;
+  }
+  .msg-system{
+    align-self:center;
+    color:var(--text-tertiary);
+    font-size:11px;
+    margin:4px 0 16px;
+    text-align:center;
+  }
+
+  .thinking-bubble{display:flex;gap:4px;padding:13px 14px;}
+  .thinking-dot{
+    width:5px;height:5px;border-radius:50%;
+    background:var(--text-tertiary);
+    animation:bounce 1.1s infinite ease-in-out;
+  }
+  .thinking-dot:nth-child(2){animation-delay:.15s;}
+  .thinking-dot:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
+
+  /* search result cards inside assistant bubble */
+  .search-intro{font-size:13.5px;margin-bottom:9px;}
+  .search-results{display:flex;flex-direction:column;gap:8px;}
+  .search-result{
+    display:block;
+    padding:9px 11px;
+    border-radius:9px;
+    background:var(--bg-base);
+    border:1px solid var(--border-soft);
+    text-decoration:none;
+  }
+  .search-result:hover{border-color:var(--accent-dim);background:var(--bg-elevated-2);}
+  .search-result-title{font-size:12.5px;font-weight:600;color:var(--accent);margin-bottom:2px;}
+  .search-result-url{font-family:var(--font-mono);font-size:10.5px;color:var(--text-tertiary);margin-bottom:4px;}
+  .search-result-snippet{font-size:12px;color:var(--text-secondary);line-height:1.45;}
+  .search-error{font-size:13.5px;color:var(--text-secondary);}
+
+  /* ---------- Composer ---------- */
+  .composer-wrap{
+    display:flex;flex-direction:column;align-items:center;
+    padding:10px 0 18px;
+    flex-shrink:0;
+  }
+  .composer{
+    width:100%;max-width:640px;padding:0 22px;
+  }
+  .input-bar{
+    display:flex;align-items:flex-end;gap:8px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:8px 8px 8px 16px;
+  }
+  .input-bar:focus-within{border-color:var(--accent-dim);}
+  .composer-input{
+    flex:1;background:transparent;border:none;color:var(--text-primary);
+    font-size:13.5px;resize:none;outline:none;
+    max-height:120px;line-height:1.5;padding:6px 0;
+  }
+  .composer-input::placeholder{color:var(--text-tertiary);}
+  .send-btn{
+    width:32px;height:32px;flex-shrink:0;
+    border:none;border-radius:10px;
+    background:var(--accent);color:#1a1408;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .send-btn:disabled{background:var(--bg-elevated-2);color:var(--text-tertiary);}
+  .send-btn svg{width:15px;height:15px;}
+  .composer-note{
+    text-align:center;font-size:10.5px;color:var(--text-tertiary);
+    margin-top:9px;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed;bottom:24px;left:50%;
+    transform:translate(-50%, 12px);
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    color:var(--text-primary);
+    font-size:12.5px;
+    padding:10px 16px;
+    border-radius:10px;
+    box-shadow:0 10px 24px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:60;
+  }
+  .toast.show{opacity:1;transform:translate(-50%, 0);}
+
+  /* ---------- Overlay (mobile sidebar) ---------- */
+  .overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.5);z-index:25;
+  }
+  .overlay.show{display:block;}
+
+  .sidebar::-webkit-scrollbar, .thread::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb, .thread::-webkit-scrollbar-thumb{
+    background:var(--bg-elevated-2);border-radius:99px;
+  }
+  .sidebar::-webkit-scrollbar-track, .thread::-webkit-scrollbar-track{background:transparent;}
+
+  @media (prefers-reduced-motion: reduce){
+    .msg{animation:none;}
+    .thinking-dot{animation:none;opacity:.7;}
+    .gauge-fill{transition:none;}
+  }
+
+  /* ---------- Markdown response ---------- */
+  .response-text{line-height:1.65;}
+  .response-text p{margin:0 0 8px;}
+  .response-text p:last-child{margin-bottom:0;}
+  .response-text ul,.response-text ol{margin:2px 0 8px 18px;padding:0;}
+  .response-text li{margin-bottom:3px;}
+  .response-text h1,.response-text h2,.response-text h3{
+    font-size:13.5px;font-weight:600;margin:10px 0 4px;
+  }
+  .response-text strong{font-weight:600;}
+  .response-text code{
+    font-family:var(--font-mono);font-size:12px;
+    background:var(--bg-base);padding:1px 5px;border-radius:4px;
+  }
+  .response-text pre{
+    background:var(--bg-base);border:1px solid var(--border-soft);
+    border-radius:8px;padding:10px 11px;overflow-x:auto;
+    margin:8px 0 2px;
+  }
+  .response-text pre code{background:none;padding:0;}
+
+  .sources-label{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--text-tertiary);
+    margin:12px 0 5px;
+  }
+
+  @media (max-width:760px){
+    .menu-btn{display:flex;}
+    .brand-name{font-size:15px;}
+    .status-pill span.status-text{display:none;}
+    .sidebar{
+      position:fixed;top:56px;bottom:0;left:0;
+      transform:translateX(-100%);
+      transition:transform .2s ease;
+      z-index:30;width:260px;
+      box-shadow:8px 0 24px rgba(0,0,0,.3);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .welcome-title{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="header">
+    <div class="header-left">
+      <button class="menu-btn" id="menuBtn" aria-label="Kenar çubuğunu aç/kapat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="3" width="18" height="18" rx="5"/>
+          <rect x="9.5" y="9.5" width="5" height="5" rx="1.2" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="brand-name">Pallas</span>
+      </div>
+    </div>
+    <div class="status-pill" title="Pallas, yanıt üretmek için her mesajını web'de arar. Sorgular DuckDuckGo'ya gönderilir.">
+      <span class="status-dot"></span><span class="status-text">Web araması aktif</span>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn lang-btn" id="langBtn">TR</button>
+      <button class="icon-btn" id="settingsBtn" aria-label="Ayarlar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+      </button>
+      <div class="popover" id="settingsPopover">
+        <div class="popover-row" id="rowAutostart">
+          <div><div class="popover-label">Otomatik başlat</div><div class="popover-sub">Oturum açtığında başlat</div></div>
+          <div class="switch" id="switchAutostart"></div>
+        </div>
+        <div class="popover-row" id="rowUpdate">
+          <div><div class="popover-label">Modelleri otomatik güncelle</div><div class="popover-sub">İyileştirmeleri diske indir</div></div>
+          <div class="switch on" id="switchUpdate"></div>
+        </div>
+        <div class="popover-divider"></div>
+        <div class="popover-row">
+          <div>
+            <div class="popover-label">
+              <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              <span id="labelUsage">Kullanım verileri</span>
+            </div>
+            <div class="popover-sub" id="subUsage">Kapalı — her zaman. Değiştirilecek bir şey yok.</div>
+          </div>
+          <div class="switch locked"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="eyebrow">Model</div>
+      <div class="model-card" id="modelCard">
+        <div class="model-card-top" id="modelCardTop">
+          <div>
+            <span class="model-name" id="modelName">Pallas 1.1</span><span class="model-size" id="modelSize">3B</span>
+            <div class="model-blurb" id="modelBlurb">Dengeli — iyi bir varsayılan</div>
+          </div>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="model-options" id="modelOptions"></div>
+      </div>
+
+      <div class="eyebrow" id="hardwareEyebrow">Yerel Donanım</div>
+      <div class="compute-panel">
+        <div class="compute-row">
+          <div class="compute-label-row"><span class="compute-label" id="labelMemory">Bellek</span><span class="compute-value" id="ramValue">—</span></div>
+          <div class="gauge"><div class="gauge-fill" id="ramFill"></div></div>
+        </div>
+        <div class="compute-row">
+          <div class="compute-label-row"><span class="compute-label" id="labelCpu">İşlemci</span><span class="compute-value" id="cpuValue">—</span></div>
+          <div class="gauge"><div class="gauge-fill cpu" id="cpuFill"></div></div>
+        </div>
+        <div class="disk-row"><span id="labelDisk">Diskteki model</span><span class="disk-value" id="diskValue">1.8 GB</span></div>
+      </div>
+
+      <button class="new-chat-btn" id="newChatBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="newChatText">Yeni sohbet</span>
+      </button>
+
+      <div class="eyebrow" id="historyEyebrow">Geçmiş</div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">Kaydedilen sohbetler burada görünecek</div>
+      </div>
+
+      <div class="sidebar-footer" id="sidebarFooter">Pallas, sana yanıt verebilmek için sorgularını web'de arar. Sohbet geçmişin yalnızca bu cihazda tutulur.</div>
+    </aside>
+
+    <main class="main">
+      <div class="thread" id="thread">
+        <div class="thread-inner" id="threadInner">
+          <div class="welcome" id="welcome">
+            <h1 class="welcome-title" id="welcomeTitle">Pallas'a istediğini sor.</h1>
+            <p class="welcome-sub" id="welcomeSub">Pallas çoğu işi bu cihazda yapar; yanıt vermek için gerektiğinde canlı olarak web'de arama yapar.</p>
+            <div class="chips">
+              <button class="chip" data-text="Yeni bir kahve markası için isim önerileri verir misin?">Fikir üret</button>
+              <button class="chip" data-text="E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?">Kod yaz</button>
+              <button class="chip" data-text="Bugün dolar kuru ne kadar?">Güncel bilgi ara</button>
+              <button class="chip" data-text="Selam, nasıl çalışıyorsun?">Sadece sohbet et</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <div class="input-bar">
+            <textarea class="composer-input" id="composerInput" placeholder="Pallas'a mesaj yaz…" rows="1"></textarea>
+            <button class="send-btn" id="sendBtn" disabled aria-label="Mesaj gönder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+          <div class="composer-note" id="composerNote">Yanıtlar, web'de yapılan canlı bir aramayla oluşturuluyor.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  /* ---------- i18n ---------- */
+  const STRINGS = {
+    tr: {
+      langToggle:'EN',
+      statusText:'Web araması aktif',
+      statusTitle:'Pallas her mesajını web\'de arar; sorgular DuckDuckGo\'ya gönderilir.',
+      menuAriaLabel:'Kenar çubuğunu aç/kapat',
+      settingsAriaLabel:'Ayarlar',
+      sendAriaLabel:'Mesaj gönder',
+      autostartLabel:'Otomatik başlat', autostartSub:'Oturum açtığında başlat',
+      updateLabel:'Modelleri otomatik güncelle', updateSub:'İyileştirmeleri diske indir',
+      usageLabel:'Kullanım verileri', usageSub:'Kapalı — her zaman. Değiştirilecek bir şey yok.',
+      hardwareEyebrow:'Yerel Donanım',
+      memoryLabel:'Bellek', cpuLabel:'İşlemci', diskLabel:'Diskteki model',
+      newChat:'Yeni sohbet',
+      historyEyebrow:'Geçmiş',
+      historyEmpty:'Kaydedilen sohbetler burada görünecek',
+      sidebarFooter:'Pallas, sana yanıt verebilmek için sorgularını web\'de arar. Sohbet geçmişin yalnızca bu cihazda tutulur.',
+      welcomeTitle:'Pallas\'a istediğini sor.',
+      welcomeSub:'Pallas çoğu işi bu cihazda yapar; yanıt vermek için gerektiğinde canlı olarak web\'de arama yapar.',
+      chips:[
+        {label:'Fikir üret',      text:'Yeni bir kahve markası için isim önerileri verir misin?'},
+        {label:'Kod yaz',         text:'E-posta adreslerini doğrulayan bir fonksiyon yazar mısın?'},
+        {label:'Güncel bilgi ara',text:'Bugün dolar kuru ne kadar?'},
+        {label:'Sadece sohbet et',text:'Selam, nasıl çalışıyorsun?'},
+      ],
+      placeholder:'Pallas\'a mesaj yaz…',
+      composerNote:'Yanıtlar, web\'de yapılan canlı bir aramayla oluşturuluyor.',
+      sourcesLabel:'Kaynaklar',
+      ollamaError:'Yapay zeka modeli hazır değil. Ollama\'nın çalıştığından ve modelin yüklü olduğundan emin ol.',
+      genericError:'Bir hata oluştu. Sunucu çalışıyor mu kontrol eder misin?',
+      noAnswer:'Yanıt alınamadı.',
+      historyToast:'Kaydedilen sohbetler bu önizlemede salt okunur.',
+      modelBlurbs:{mini:'En hızlı — her dizüstü bilgisayarda çalışır', standard:'Dengeli — iyi bir varsayılan', pro:'En yetenekli — 16GB+ RAM gerektirir'},
+      modelSwitchPace:{mini:'yanıtlar daha hızlı gelir.', standard:'hız ve detay arasında bir denge sağlar.', pro:'yanıtlar biraz daha yavaş gelir.'},
+      modelSwitchMsg:(name,size,pace)=>`${name} (${size}) modeline geçildi — ${pace}`,
+    },
+    en: {
+      langToggle:'TR',
+      statusText:'Web search active',
+      statusTitle:'Pallas searches the web for every message. Queries go to DuckDuckGo.',
+      menuAriaLabel:'Toggle sidebar',
+      settingsAriaLabel:'Settings',
+      sendAriaLabel:'Send message',
+      autostartLabel:'Auto-start', autostartSub:'Start at login',
+      updateLabel:'Auto-update models', updateSub:'Download improvements to disk',
+      usageLabel:'Usage data', usageSub:'Off — always. Nothing to change.',
+      hardwareEyebrow:'Local Hardware',
+      memoryLabel:'Memory', cpuLabel:'CPU', diskLabel:'Model on disk',
+      newChat:'New chat',
+      historyEyebrow:'History',
+      historyEmpty:'Saved chats will appear here',
+      sidebarFooter:'Pallas searches the web to answer you. Your chat history is stored on this device only.',
+      welcomeTitle:'Ask Pallas anything.',
+      welcomeSub:'Pallas runs most things on this device, and searches the web live when needed.',
+      chips:[
+        {label:'Generate ideas',      text:'Can you suggest names for a new coffee brand?'},
+        {label:'Write code',          text:'Can you write a function that validates email addresses?'},
+        {label:'Search current info', text:'What is the dollar exchange rate today?'},
+        {label:'Just chat',           text:'Hey, how do you work?'},
+      ],
+      placeholder:'Message Pallas…',
+      composerNote:'Answers are generated with a live web search.',
+      sourcesLabel:'Sources',
+      ollamaError:'The AI model isn\'t ready. Make sure Ollama is running and the model is installed.',
+      genericError:'Something went wrong. Is the server running?',
+      noAnswer:'No response received.',
+      historyToast:'Saved chats are read-only in this preview.',
+      modelBlurbs:{mini:'Fastest — runs on any laptop', standard:'Balanced — a good default', pro:'Most capable — requires 16GB+ RAM'},
+      modelSwitchPace:{mini:'responses will be faster.', standard:'balances speed and detail.', pro:'responses will be a bit slower.'},
+      modelSwitchMsg:(name,size,pace)=>`Switched to ${name} (${size}) — ${pace}`,
+    },
+  };
+
+  const browserLang = (navigator.language||'').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+  let lang = localStorage.getItem('pallas-lang') || browserLang;
+  function t(key){ return STRINGS[lang][key]; }
+
+  /* ---------- Models ---------- */
+  const MODELS = [
+    {id:'mini',     name:'Pallas 1',       size:'1B', ramIdle:18, ramActive:34, cpuIdle:4, cpuActive:42, disk:'0.6 GB', minDelay:250},
+    {id:'standard', name:'Pallas 1.1',     size:'3B', ramIdle:29, ramActive:57, cpuIdle:6, cpuActive:72, disk:'1.8 GB', minDelay:500},
+    {id:'pro',      name:'Pallas 1.2 Max', size:'8B', ramIdle:41, ramActive:83, cpuIdle:9, cpuActive:95, disk:'4.7 GB', minDelay:900},
+  ];
+
+  let currentModel = MODELS[1];
+  let history = [];
+  let activeHistoryId = null;
+  let messageCount = 0;
+  let sessionId = newSessionId();
+
+  function newSessionId(){
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  const el = (id) => document.getElementById(id);
+  const thread = el('thread');
+  const threadInner = el('threadInner');
+  const welcome = el('welcome');
+  const input = el('composerInput');
+  const sendBtn = el('sendBtn');
+  const ramFill = el('ramFill'), ramValue = el('ramValue');
+  const cpuFill = el('cpuFill'), cpuValue = el('cpuValue');
+  const diskValue = el('diskValue');
+  const toastEl = el('toast');
+
+  function rand(min, max){ return Math.round(min + Math.random()*(max-min)); }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(()=> toastEl.classList.remove('show'), 2200);
+  }
+
+  /* ---------- Apply language ---------- */
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.title = lang === 'tr' ? 'Pallas — Yerel Yapay Zeka' : 'Pallas — Local AI';
+    el('langBtn').textContent = t('langToggle');
+    el('menuBtn').setAttribute('aria-label', t('menuAriaLabel'));
+    el('settingsBtn').setAttribute('aria-label', t('settingsAriaLabel'));
+    el('sendBtn').setAttribute('aria-label', t('sendAriaLabel'));
+    document.querySelector('.status-text').textContent = t('statusText');
+    document.querySelector('.status-pill').title = t('statusTitle');
+    document.querySelector('#rowAutostart .popover-label').textContent = t('autostartLabel');
+    document.querySelector('#rowAutostart .popover-sub').textContent = t('autostartSub');
+    document.querySelector('#rowUpdate .popover-label').textContent = t('updateLabel');
+    document.querySelector('#rowUpdate .popover-sub').textContent = t('updateSub');
+    el('labelUsage').textContent = t('usageLabel');
+    el('subUsage').textContent = t('usageSub');
+    el('hardwareEyebrow').textContent = t('hardwareEyebrow');
+    el('labelMemory').textContent = t('memoryLabel');
+    el('labelCpu').textContent = t('cpuLabel');
+    el('labelDisk').textContent = t('diskLabel');
+    el('newChatText').textContent = t('newChat');
+    el('historyEyebrow').textContent = t('historyEyebrow');
+    el('sidebarFooter').textContent = t('sidebarFooter');
+    el('welcomeTitle').textContent = t('welcomeTitle');
+    el('welcomeSub').textContent = t('welcomeSub');
+    el('composerNote').textContent = t('composerNote');
+    input.placeholder = t('placeholder');
+    document.querySelectorAll('.chip').forEach((chip, i) => {
+      const c = t('chips')[i];
+      if (c){ chip.textContent = c.label; chip.dataset.text = c.text; }
+    });
+    el('modelBlurb').textContent = t('modelBlurbs')[currentModel.id];
+    renderModelOptions();
+    renderHistory();
+  }
+
+  el('langBtn').addEventListener('click', () => {
+    lang = lang === 'tr' ? 'en' : 'tr';
+    localStorage.setItem('pallas-lang', lang);
+    applyLang();
+  });
+
+  /* ---------- Compute gauges (cosmetic — reflects app activity, not a real local model) ---------- */
+  function setGauges(active){
+    const m = currentModel;
+    const ram = active ? rand(m.ramActive-4, m.ramActive+4) : rand(m.ramIdle-3, m.ramIdle+3);
+    const cpu = active ? rand(m.cpuActive-4, m.cpuActive+4) : rand(m.cpuIdle-2, m.cpuIdle+2);
+    ramFill.style.width = ram + '%';
+    cpuFill.style.width = cpu + '%';
+    ramValue.textContent = ram + '%';
+    cpuValue.textContent = cpu + '%';
+  }
+  function initGauges(){
+    diskValue.textContent = currentModel.disk;
+    setGauges(false);
+  }
+
+  /* ---------- Model switcher ---------- */
+  const modelCard = el('modelCard');
+  const modelOptions = el('modelOptions');
+
+  function renderModelOptions(){
+    modelOptions.innerHTML = '';
+    MODELS.forEach(m => {
+      const opt = document.createElement('button');
+      opt.className = 'model-option' + (m.id === currentModel.id ? ' active' : '');
+      opt.innerHTML = `<span class="model-option-top">${m.name} <span class="model-size">${m.size}</span></span><span class="model-option-blurb">${t('modelBlurbs')[m.id]}</span>`;
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectModel(m);
+      });
+      modelOptions.appendChild(opt);
+    });
+  }
+
+  function selectModel(m){
+    const changed = m.id !== currentModel.id;
+    currentModel = m;
+    el('modelName').textContent = m.name;
+    el('modelSize').textContent = m.size;
+    el('modelBlurb').textContent = t('modelBlurbs')[m.id];
+    diskValue.textContent = m.disk;
+    renderModelOptions();
+    setGauges(false);
+    modelCard.classList.remove('open');
+    if (changed && messageCount > 0){
+      addSystemMessage(t('modelSwitchMsg')(m.name, m.size, t('modelSwitchPace')[m.id]));
+    }
+  }
+
+  el('modelCardTop').addEventListener('click', () => modelCard.classList.toggle('open'));
+  document.addEventListener('click', (e) => {
+    if (!modelCard.contains(e.target)) modelCard.classList.remove('open');
+  });
+  renderModelOptions();
+  initGauges();
+
+  /* ---------- Settings popover ---------- */
+  const settingsBtn = el('settingsBtn');
+  const settingsPopover = el('settingsPopover');
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsPopover.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!settingsPopover.contains(e.target) && e.target !== settingsBtn) settingsPopover.classList.remove('open');
+  });
+  function wireSwitch(rowId, switchId){
+    const row = el(rowId), sw = el(switchId);
+    row.addEventListener('click', () => sw.classList.toggle('on'));
+  }
+  wireSwitch('rowAutostart','switchAutostart');
+  wireSwitch('rowUpdate','switchUpdate');
+
+  /* ---------- Mobile sidebar ---------- */
+  const sidebar = el('sidebar');
+  const overlay = el('overlay');
+  el('menuBtn').addEventListener('click', () => {
+    sidebar.classList.add('open');
+    overlay.classList.add('show');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  });
+
+  /* ---------- Messaging ---------- */
+  function scrollToBottom(){
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function addUserMessage(text){
+    welcome.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.className = 'msg msg-user';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    msg.appendChild(bubble);
+    threadInner.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function addAssistantMessage(html, meta){
+    const msg = document.createElement('div');
+    msg.className = 'msg msg-assistant';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = html;
+    msg.appendChild(bubble);
+    if (meta){
+      const metaEl = document.createElement('div');
+      metaEl.className = 'msg-meta';
+      metaEl.textContent = meta;
+      msg.appendChild(metaEl);
+    }
+    threadInner.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function addSystemMessage(text){
+    const msg = document.createElement('div');
+    msg.className = 'msg-system';
+    msg.textContent = text;
+    threadInner.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function sanitizeUrl(url){
+    try{
+      const u = new URL(url);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return '#';
+      return u.href;
+    }catch(e){ return '#'; }
+  }
+
+  function domainFromUrl(url){
+    try{ return new URL(url).hostname.replace(/^www\./,''); }
+    catch(e){ return url; }
+  }
+
+  /* ---------- Chat API (calls our own backend, see server.js) ---------- */
+  async function fetchChatResponse(query, modelId, sid){
+    const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}`;
+    const res = await fetch(url);
+    if (!res.ok && res.status !== 503) throw new Error('chat_failed');
+    return res.json();
+  }
+
+  function renderMarkdown(text){
+    if (window.marked){
+      try { return marked.parse(text); } catch(_){}
+    }
+    return escapeHtml(text).replace(/\n/g,'<br>');
+  }
+
+  function buildResponseHtml(data){
+    if (data.error === 'ollama_unavailable'){
+      return `<div class="search-error">${t('ollamaError')}</div>`;
+    }
+    let html = '';
+    if (data.text){
+      html += `<div class="response-text">${renderMarkdown(data.text)}</div>`;
+    }
+    if (data.results && data.results.length > 0){
+      html += `<div class="sources-label">${t('sourcesLabel')}</div><div class="search-results">`;
+      data.results.slice(0,4).forEach(r => {
+        const safeLink = sanitizeUrl(r.link);
+        html += `<a class="search-result" href="${safeLink}" target="_blank" rel="noopener noreferrer">
+          <div class="search-result-title">${escapeHtml(r.title)}</div>
+          <div class="search-result-url">${escapeHtml(domainFromUrl(safeLink))}</div>
+          ${r.snippet ? `<div class="search-result-snippet">${escapeHtml(r.snippet)}</div>` : ''}
+        </a>`;
+      });
+      html += '</div>';
+    }
+    return html || `<div class="search-error">${t('noAnswer')}</div>`;
+  }
+
+  function sendMessage(text){
+    text = text.trim();
+    if (!text) return;
+    messageCount++;
+    addUserMessage(text);
+    input.value = '';
+    autoResize();
+    updateSendState();
+
+    if (messageCount === 1){
+      addToHistory(text);
+    }
+
+    const thinkingMsg = document.createElement('div');
+    thinkingMsg.className = 'msg msg-assistant';
+    const tb = document.createElement('div');
+    tb.className = 'bubble thinking-bubble';
+    tb.innerHTML = '<span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span>';
+    thinkingMsg.appendChild(tb);
+    threadInner.appendChild(thinkingMsg);
+    scrollToBottom();
+    setGauges(true);
+
+    const startTime = performance.now();
+    const minDelay = currentModel.minDelay;
+
+    fetchChatResponse(text, currentModel.id, sessionId)
+      .then(data => {
+        const elapsed = performance.now() - startTime;
+        const wait = Math.max(0, minDelay - elapsed);
+        return new Promise(resolve => setTimeout(() => resolve(data), wait));
+      })
+      .then(data => {
+        thinkingMsg.remove();
+        const totalSeconds = ((performance.now() - startTime) / 1000).toFixed(1);
+        const searchNote = data.results && data.results.length > 0 ? '🔎 web · ' : '';
+        addAssistantMessage(buildResponseHtml(data), `${totalSeconds}s · ${searchNote}${currentModel.name}`);
+        setGauges(false);
+      })
+      .catch(() => {
+        thinkingMsg.remove();
+        addAssistantMessage(`<div class="search-error">${t('genericError')}</div>`);
+        setGauges(false);
+      });
+  }
+
+  function addToHistory(firstText){
+    const id = 'h' + Date.now();
+    activeHistoryId = id;
+    history.unshift({id, title: firstText.slice(0,40) + (firstText.length>40?'…':'')});
+    renderHistory();
+  }
+
+  function renderHistory(){
+    const list = el('historyList');
+    if (history.length === 0){
+      list.innerHTML = `<div class="history-empty">${t('historyEmpty')}</div>`;
+      return;
+    }
+    list.innerHTML = '';
+    history.forEach(h => {
+      const btn = document.createElement('button');
+      btn.className = 'history-item' + (h.id === activeHistoryId ? ' active' : '');
+      btn.textContent = h.title;
+      btn.addEventListener('click', () => {
+        activeHistoryId = h.id;
+        renderHistory();
+        showToast(t('historyToast'));
+      });
+      list.appendChild(btn);
+    });
+  }
+
+  function resetThread(){
+    fetch('/api/session/clear', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ sessionId })
+    }).catch(()=>{});
+    sessionId = newSessionId();
+    threadInner.innerHTML = '';
+    threadInner.appendChild(welcome);
+    welcome.style.display = 'flex';
+    messageCount = 0;
+    activeHistoryId = null;
+    renderHistory();
+  }
+
+  el('newChatBtn').addEventListener('click', resetThread);
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => sendMessage(chip.dataset.text));
+  });
+
+  function autoResize(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  }
+  function updateSendState(){
+    sendBtn.disabled = input.value.trim().length === 0;
+  }
+  input.addEventListener('input', () => { autoResize(); updateSendState(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      if (input.value.trim()) sendMessage(input.value);
+    }
+  });
+  sendBtn.addEventListener('click', () => { if (input.value.trim()) sendMessage(input.value); });
+
+  applyLang();
+
+})();
+</script>
+</body>
+</html>
