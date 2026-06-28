@@ -17,7 +17,7 @@ const OLLAMA_BASE  = process.env.OLLAMA_BASE || 'http://127.0.0.1:11434';
 const GROQ_MODELS = {
   mini:     'llama-3.1-8b-instant',
   standard: 'llama-3.3-70b-versatile',
-  pro:      'llama-3.3-70b-specdec',
+  pro:      'deepseek-r1-distill-llama-70b',
 };
 const OLLAMA_MODELS = {
   mini:     'llama3.2:3b',
