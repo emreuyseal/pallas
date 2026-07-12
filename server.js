@@ -289,7 +289,6 @@ app.post('/api/session/restore', (req, res) => {
 
 app.get('/api/status', async (req, res) => {
   if (USE_GROQ) return res.json({ backend: 'groq', ready: true });
-  // debug: show whether env var is present at all
   const hasKey = !!(process.env.GROQ_API_KEY);
   try {
     const r    = await fetch(`${OLLAMA_BASE}/api/tags`, { signal: AbortSignal.timeout(2000) });
@@ -298,6 +297,52 @@ app.get('/api/status', async (req, res) => {
   } catch (_) {
     res.json({ backend: 'ollama', ready: false, models: [], hasGroqKey: hasKey });
   }
+});
+
+// Returns which models are downloaded + whether GPU is active
+app.get('/api/hardware', async (req, res) => {
+  if (USE_GROQ) return res.json({ backend: 'groq', gpu: false, models: [], loaded: [] });
+  try {
+    const tags = await fetch(`${OLLAMA_BASE}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    const { models = [] } = await tags.json();
+    let loaded = [], gpu = false;
+    try {
+      const ps = await fetch(`${OLLAMA_BASE}/api/ps`, { signal: AbortSignal.timeout(2000) });
+      const psData = await ps.json();
+      loaded = (psData.models || []).map(m => m.name);
+      gpu    = (psData.models || []).some(m => (m.size_vram || 0) > 0);
+    } catch (_) {}
+    res.json({ backend: 'ollama', gpu, models: models.map(m => m.name), loaded });
+  } catch (_) {
+    res.json({ backend: 'ollama', gpu: false, models: [], loaded: [] });
+  }
+});
+
+// Stream model pull progress from Ollama
+app.post('/api/pull', async (req, res) => {
+  const { model } = req.body || {};
+  if (!model) return res.status(400).json({ error: 'missing model' });
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  try {
+    const pull = await fetch(`${OLLAMA_BASE}/api/pull`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: model, stream: true }),
+      signal: AbortSignal.timeout(600000),
+    });
+    const reader  = pull.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write('data: ' + decoder.decode(value) + '\n\n');
+    }
+  } catch (err) {
+    res.write('data: ' + JSON.stringify({ error: err.message }) + '\n\n');
+  }
+  res.end();
 });
 
 app.listen(PORT, () => {

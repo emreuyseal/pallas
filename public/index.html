@@ -664,6 +664,46 @@
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
 
+  /* Hardware badge */
+  .hw-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:600;letter-spacing:.03em;
+    padding:4px 10px;border-radius:99px;
+    border:1px solid rgba(111,174,139,.25);
+    color:var(--green);background:rgba(111,174,139,.08);
+    cursor:default;white-space:nowrap;
+  }
+  .hw-badge.gpu{
+    border-color:rgba(227,168,87,.3);
+    color:var(--accent);background:rgba(227,168,87,.1);
+  }
+  .hw-badge.cloud{
+    border-color:rgba(143,166,216,.25);
+    color:#8fa6d8;background:rgba(143,166,216,.08);
+  }
+  .hw-badge svg{width:12px;height:12px;flex-shrink:0;}
+
+  /* Model setup overlay */
+  .setup-overlay{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(10,10,12,.92);
+    backdrop-filter:blur(12px);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .setup-card{
+    background:var(--bg-surface);border:1px solid var(--border);border-radius:18px;
+    padding:40px 44px;max-width:460px;width:90%;text-align:center;
+    box-shadow:0 40px 100px rgba(0,0,0,.7);
+    animation:cardSpring .5s cubic-bezier(.22,1,.36,1) both;
+  }
+  .setup-card h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:10px;}
+  .setup-card p{color:var(--text-secondary);font-size:14px;line-height:1.65;margin-bottom:28px;}
+  .setup-progress{margin-bottom:20px;}
+  .setup-model-name{font-family:var(--font-mono);font-size:12px;color:var(--accent);margin-bottom:8px;}
+  .setup-bar-wrap{background:var(--bg-elevated);border-radius:99px;height:6px;overflow:hidden;}
+  .setup-bar{height:100%;background:linear-gradient(90deg,#f7bb55,#e3a857);border-radius:99px;width:0%;transition:width .4s ease;}
+  .setup-status{font-size:12px;color:var(--text-tertiary);margin-top:6px;}
+
   /* ======== ANIMATIONS ======== */
 
   /* Ambient background pulse */
@@ -790,9 +830,10 @@
         <img src="/logo.png" class="header-logo" alt="Pallas">
       </div>
     </div>
-    <div class="status-pill" title="Pallas yanıt üretmek için web'de arar.">
+    <div class="status-pill" id="statusPill" title="Pallas yanıt üretmek için web'de arar.">
       <span class="status-dot"></span><span class="status-text">Web araması aktif</span>
     </div>
+    <div class="hw-badge" id="hwBadge" style="display:none"></div>
     <div class="header-right">
       <button class="icon-btn lang-btn" id="langBtn">TR</button>
       <button class="icon-btn" id="settingsBtn" aria-label="Ayarlar">
@@ -1649,6 +1690,7 @@
         const searchNote   = data.results && data.results.length > 0 ? '🔎 web · ' : '';
         addAssistantMessage(buildResponseHtml(data), `${totalSeconds}s · ${searchNote}${currentModel.name}`);
         setGauges(false);
+        refreshHwBadge();
 
         // Track session for save/restore
         if (data.text) {
@@ -1771,8 +1813,125 @@
     }
   });
 
+  /* ---------- Hardware badge + local model setup ---------- */
+  const REQUIRED_MODELS = ['llama3.2:3b', 'qwen2.5:7b'];
+
+  async function initHardware() {
+    try {
+      const hw = await fetch('/api/hardware').then(r => r.json());
+      const badge = document.getElementById('hwBadge');
+      if (!badge) return;
+
+      if (hw.backend === 'groq') {
+        badge.className = 'hw-badge cloud';
+        badge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 0 1 0-14h.5"/><polyline points="16 3 20 7 16 11"/></svg> cloud AI`;
+        badge.style.display = 'inline-flex';
+        return;
+      }
+
+      // Local Ollama — check if models are present
+      const missing = REQUIRED_MODELS.filter(m =>
+        !hw.models.some(n => n === m || n.startsWith(m.split(':')[0]))
+      );
+
+      if (missing.length > 0) {
+        await runModelSetup(missing, badge);
+      } else {
+        showHwBadge(badge, hw.gpu);
+      }
+    } catch (_) {}
+  }
+
+  function showHwBadge(badge, gpu) {
+    badge.className = 'hw-badge' + (gpu ? ' gpu' : '');
+    badge.style.display = 'inline-flex';
+    if (gpu) {
+      badge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="20" height="9" rx="2"/><path d="M6 8V6m4 2V6m4 2V6m4 2V6"/><circle cx="7" cy="12" r="1"/></svg> GPU`;
+    } else {
+      badge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="18" x2="12" y2="21"/></svg> on your device`;
+    }
+  }
+
+  async function runModelSetup(missing, badge) {
+    const overlay = document.createElement('div');
+    overlay.className = 'setup-overlay';
+    overlay.innerHTML = `
+      <div class="setup-card">
+        <h2>one-time setup</h2>
+        <p>downloading the AI models so everything runs on your device — this only happens once and can take a few minutes depending on your connection.</p>
+        <div class="setup-progress" id="setupProgress">
+          <div class="setup-model-name" id="setupModelName"></div>
+          <div class="setup-bar-wrap"><div class="setup-bar" id="setupBar"></div></div>
+          <div class="setup-status" id="setupStatus">starting…</div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    for (const model of missing) {
+      document.getElementById('setupModelName').textContent = model;
+      document.getElementById('setupBar').style.width = '0%';
+      document.getElementById('setupStatus').textContent = 'connecting to Ollama…';
+
+      await new Promise((resolve) => {
+        fetch('/api/pull', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model }),
+        }).then(async res => {
+          const reader = res.body.getReader();
+          const dec = new TextDecoder();
+          let buf = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            const lines = buf.split('\n\n');
+            buf = lines.pop();
+            for (const chunk of lines) {
+              const dataPart = chunk.replace(/^data: /, '').trim();
+              if (!dataPart) continue;
+              try {
+                const lines2 = dataPart.split('\n');
+                for (const line of lines2) {
+                  if (!line.trim()) continue;
+                  const j = JSON.parse(line);
+                  if (j.total && j.completed) {
+                    const pct = Math.round((j.completed / j.total) * 100);
+                    document.getElementById('setupBar').style.width = pct + '%';
+                    const mb = Math.round(j.completed / 1024 / 1024);
+                    const total = Math.round(j.total / 1024 / 1024);
+                    document.getElementById('setupStatus').textContent = `${j.status || 'downloading'} — ${mb} / ${total} MB`;
+                  } else if (j.status) {
+                    document.getElementById('setupStatus').textContent = j.status;
+                    if (j.status === 'success') {
+                      document.getElementById('setupBar').style.width = '100%';
+                    }
+                  }
+                }
+              } catch (_) {}
+            }
+          }
+          resolve();
+        }).catch(() => resolve());
+      });
+    }
+
+    overlay.remove();
+    const hw = await fetch('/api/hardware').then(r => r.json()).catch(() => ({ gpu: false }));
+    showHwBadge(badge, hw.gpu);
+  }
+
+  // Re-check GPU status after a response (model may have been loaded into GPU)
+  function refreshHwBadge() {
+    fetch('/api/hardware').then(r => r.json()).then(hw => {
+      const badge = document.getElementById('hwBadge');
+      if (badge && hw.backend === 'ollama') showHwBadge(badge, hw.gpu);
+    }).catch(() => {});
+  }
+
   /* ---------- Init ---------- */
   checkAuth();
+  initHardware();
 
 })();
 </script>
