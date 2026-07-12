@@ -47,7 +47,6 @@
   ::selection{background:var(--accent-soft);}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
-  /* ---------- Auth Screen ---------- */
   .auth-screen{
     position:fixed;inset:0;
     background:var(--bg-base);
@@ -123,10 +122,7 @@
     text-align:center;
   }
 
-  /* ---------- App ---------- */
   .app{height:100vh;display:flex;flex-direction:column;}
-
-  /* ---------- Header ---------- */
   .header{
     height:56px;flex-shrink:0;
     display:flex;align-items:center;justify-content:space-between;
@@ -206,10 +202,7 @@
   .popover-divider{height:1px;background:var(--border-soft);margin:5px 4px;}
   .lock-icon{width:11px;height:11px;color:var(--text-tertiary);margin-right:4px;vertical-align:-1px;}
 
-  /* ---------- Layout ---------- */
   .layout{flex:1;display:flex;min-height:0;position:relative;}
-
-  /* ---------- Sidebar ---------- */
   .sidebar{
     width:272px;flex-shrink:0;
     background:var(--bg-surface);
@@ -299,7 +292,6 @@
   .history-delete:hover{background:var(--bg-elevated-2);color:var(--red);}
   .history-empty{font-size:11.5px;color:var(--text-tertiary);padding:6px 9px;}
 
-  /* ---------- User section ---------- */
   .user-section{
     margin-top:auto;padding-top:12px;
     border-top:1px solid var(--border-soft);
@@ -337,7 +329,6 @@
     padding-top:8px;
   }
 
-  /* ---------- Main / Chat ---------- */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;}
   .thread{
     flex:1;overflow-y:auto;padding:28px 0 12px;
@@ -363,7 +354,7 @@
   .chip:hover{border-color:var(--accent-dim);background:var(--bg-elevated-2);}
 
   .msg{display:flex;flex-direction:column;margin-bottom:18px;max-width:88%;animation:rise .25s ease;}
-  @keyframes rise{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}} /* superseded by msgSpring */
+  @keyframes rise{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
   .msg-user{align-self:flex-end;align-items:flex-end;}
   .msg-assistant{align-self:flex-start;align-items:flex-start;}
   .bubble{padding:10px 14px;border-radius:14px;font-size:13.5px;white-space:pre-wrap;word-wrap:break-word;}
@@ -378,7 +369,7 @@
   .thinking-dot{width:5px;height:5px;border-radius:50%;background:var(--text-tertiary);animation:bounce 1.1s infinite ease-in-out;}
   .thinking-dot:nth-child(2){animation-delay:.15s;}
   .thinking-dot:nth-child(3){animation-delay:.3s;}
-  @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}} /* superseded by waveThink */
+  @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-3px);opacity:1;}}
 
   .search-intro{font-size:13.5px;margin-bottom:9px;}
   .search-results{display:flex;flex-direction:column;gap:8px;}
@@ -389,7 +380,6 @@
   .search-result-snippet{font-size:12px;color:var(--text-secondary);line-height:1.45;}
   .search-error{font-size:13.5px;color:var(--text-secondary);}
 
-  /* ---------- Composer ---------- */
   .composer-wrap{display:flex;flex-direction:column;align-items:center;padding:10px 0 18px;flex-shrink:0;}
   .composer{width:100%;max-width:640px;padding:0 22px;}
   .input-bar{
@@ -415,7 +405,6 @@
   .web-search-btn svg{width:16px;height:16px;}
   .composer-note{text-align:center;font-size:10.5px;color:var(--text-tertiary);margin-top:9px;}
 
-  /* ---------- Toast ---------- */
   .toast{
     position:fixed;bottom:24px;left:50%;
     transform:translate(-50%, 12px);
@@ -429,7 +418,6 @@
   }
   .toast.show{opacity:1;transform:translate(-50%, 0);}
 
-  /* ---------- Overlay (mobile sidebar) ---------- */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:25;}
   .overlay.show{display:block;}
 
@@ -443,7 +431,6 @@
     .gauge-fill{transition:none;}
   }
 
-  /* ---------- Markdown ---------- */
   .response-text{line-height:1.65;}
   .response-text p{margin:0 0 8px;}
   .response-text p:last-child{margin-bottom:0;}
@@ -456,7 +443,6 @@
   .response-text pre code{background:none;padding:0;}
   .sources-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);margin:12px 0 5px;}
 
-  /* ---------- Code copy button ---------- */
   .code-block-wrap{position:relative;margin:8px 0 2px;}
   .code-block-wrap pre{margin:0;}
   .copy-code-btn{
@@ -472,7 +458,6 @@
   .copy-code-btn:hover{color:var(--text-primary);background:var(--bg-elevated);}
   .copy-code-btn.ok{color:var(--green);border-color:currentColor;}
 
-  /* ---------- Message actions ---------- */
   .msg-actions{
     display:flex;gap:5px;margin-top:5px;padding:0 2px;
     opacity:0;transition:opacity .12s;
@@ -488,7 +473,6 @@
   .msg-action-btn svg{width:11px;height:11px;}
   .msg-action-btn.ok{color:var(--green);border-color:currentColor;}
 
-  /* ---------- Password toggle ---------- */
   .password-wrap{position:relative;margin-bottom:10px;}
   .password-wrap .auth-input{padding-right:42px;margin-bottom:0;}
   .pw-toggle{
@@ -498,7 +482,6 @@
   .pw-toggle:hover{color:var(--text-secondary);}
   .pw-toggle svg{width:16px;height:16px;display:block;}
 
-  /* ---------- History item with timestamp ---------- */
   .history-item{
     flex:1;padding:7px 9px 6px;border-radius:7px;
     background:transparent;border:none;text-align:left;
@@ -524,13 +507,9 @@
     .welcome-title{font-size:22px;}
   }
 
-  /* ═══════════ Flashy visual overrides ═══════════ */
-
-  /* Smooth app entrance */
   .app{animation:appEnter .45s cubic-bezier(.22,1,.36,1);}
   @keyframes appEnter{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-  /* Gradient brand name */
   .brand-name{
     background:linear-gradient(135deg,#fcd98a 0%,#e3a857 45%,#c88b30 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -541,21 +520,18 @@
     font-size:24px;
   }
 
-  /* Header logo */
   .header-logo{
     height:28px;width:auto;
     mix-blend-mode:screen;
     filter:sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.05) drop-shadow(0 0 8px rgba(227,168,87,.45));
   }
 
-  /* Glass header */
   .header{
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     background:rgba(21,22,26,.80);
     border-bottom-color:rgba(227,168,87,.1);
   }
 
-  /* Gradient + glowing send button */
   .send-btn:not(:disabled){
     background:linear-gradient(135deg,#f7bb55 0%,#e3a857 55%,#c88b30 100%);
     box-shadow:0 2px 16px rgba(227,168,87,.45);
@@ -566,7 +542,6 @@
   }
   .send-btn:not(:disabled):active{transform:translateY(0);}
 
-  /* Input glow on focus */
   .input-bar:focus-within{
     border-color:var(--accent-dim);
     box-shadow:0 0 0 3px rgba(227,168,87,.12),0 4px 20px rgba(0,0,0,.3);
@@ -576,17 +551,13 @@
     box-shadow:0 0 0 3px rgba(227,168,87,.12);
   }
 
-  /* Pulsing status dot */
   @keyframes pulse-ring{
     0%,100%{box-shadow:0 0 0 3px rgba(111,174,139,.15);}
     50%{box-shadow:0 0 0 8px rgba(111,174,139,.04);}
   }
   .status-dot{animation:pulse-ring 2.4s ease-in-out infinite;}
 
-  /* Sidebar gradient */
   .sidebar{background:linear-gradient(180deg,#1f2128 0%,#1c1e23 100%);}
-
-  /* Glowing model card */
   .model-card{
     border-color:rgba(227,168,87,.15);
     box-shadow:0 4px 20px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
@@ -597,16 +568,12 @@
     box-shadow:0 0 14px rgba(227,168,87,.15);
   }
 
-  /* New chat button glow */
   .new-chat-btn:hover{box-shadow:0 0 18px rgba(227,168,87,.2);}
-
-  /* Amber thinking dots */
   .thinking-dot{
     background:var(--accent);
     box-shadow:0 0 6px rgba(227,168,87,.5);
   }
 
-  /* Enhanced auth card */
   .auth-card{
     background:linear-gradient(160deg,#22242d 0%,#1c1e25 100%);
     border-color:rgba(227,168,87,.2);
@@ -619,7 +586,6 @@
     background:radial-gradient(ellipse at 50% 40%,rgba(30,25,15,.9) 0%,#15161a 70%);
   }
 
-  /* Auth logo */
   .auth-logo{
     width:110px;height:110px;
     object-fit:contain;
@@ -631,7 +597,6 @@
   }
   .auth-brand{flex-direction:column;align-items:flex-start;gap:4px;}
 
-  /* Gradient auth button */
   .auth-btn{
     background:linear-gradient(135deg,#f7bb55 0%,#e3a857 55%,#c88b30 100%);
     box-shadow:0 4px 22px rgba(227,168,87,.4);
@@ -642,29 +607,20 @@
   }
   .auth-btn:active:not(:disabled){transform:translateY(0);}
 
-  /* User bubble glow */
   .msg-user .bubble{box-shadow:0 2px 14px rgba(227,168,87,.1);}
-
-  /* History active glow */
   .history-entry.active{
     background:linear-gradient(135deg,rgba(58,47,34,.9),rgba(42,33,22,.5));
     box-shadow:inset 0 0 0 1px rgba(227,168,87,.18);
   }
 
-  /* Chip hover glow */
   .chip:hover{box-shadow:0 0 12px rgba(227,168,87,.12);}
-
-  /* Compute gauge fill glow */
   .gauge-fill{box-shadow:0 0 6px rgba(227,168,87,.3);}
   .gauge-fill.cpu{box-shadow:0 0 6px rgba(143,166,216,.3);}
-
-  /* Welcome title gradient */
   .welcome-title{
     background:linear-gradient(135deg,#edeae3 0%,#fcd98a 60%,#e3a857 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
 
-  /* Hardware badge */
   .hw-badge{
     display:inline-flex;align-items:center;gap:6px;
     font-size:11.5px;font-weight:600;letter-spacing:.03em;
@@ -683,7 +639,6 @@
   }
   .hw-badge svg{width:12px;height:12px;flex-shrink:0;}
 
-  /* Model setup overlay */
   .setup-overlay{
     position:fixed;inset:0;z-index:200;
     background:rgba(10,10,12,.92);
@@ -704,16 +659,12 @@
   .setup-bar{height:100%;background:linear-gradient(90deg,#f7bb55,#e3a857);border-radius:99px;width:0%;transition:width .4s ease;}
   .setup-status{font-size:12px;color:var(--text-tertiary);margin-top:6px;}
 
-  /* ======== ANIMATIONS ======== */
-
-  /* Ambient background pulse */
   @keyframes bgAmbient{
     0%,100%{background-color:#15161a;}
     50%{background-color:#131418;}
   }
   body{animation:bgAmbient 12s ease-in-out infinite;}
 
-  /* Spring message entrance */
   @keyframes msgSpring{
     0%  {opacity:0;transform:translateY(16px) scale(0.95);}
     65% {opacity:1;transform:translateY(-3px) scale(1.005);}
@@ -721,7 +672,6 @@
   }
   .msg{animation:msgSpring .38s cubic-bezier(.22,1,.36,1) both;}
 
-  /* Wave thinking dots */
   @keyframes waveThink{
     0%,100%{transform:scale(.75) translateY(0);opacity:.4;}
     50%    {transform:scale(1.4) translateY(-8px);opacity:1;}
@@ -730,7 +680,6 @@
   .thinking-dot:nth-child(2){animation-delay:.14s!important;}
   .thinking-dot:nth-child(3){animation-delay:.28s!important;}
 
-  /* Auth card spring entrance */
   @keyframes cardSpring{
     0%  {opacity:0;transform:translateY(36px) scale(0.94);}
     65% {opacity:1;transform:translateY(-6px) scale(1.01);}
@@ -738,21 +687,18 @@
   }
   .auth-card{animation:cardSpring .55s cubic-bezier(.22,1,.36,1) both;}
 
-  /* Auth logo float */
   @keyframes logoFloat{
     0%,100%{transform:translateY(0) rotate(-1deg);}
     50%    {transform:translateY(-7px) rotate(1deg);}
   }
   .auth-logo{animation:logoFloat 4.5s ease-in-out infinite;}
 
-  /* Header logo breathe */
   @keyframes logoBreathe{
     0%,100%{filter:sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.05) drop-shadow(0 0 8px rgba(227,168,87,.45));}
     50%    {filter:sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15) drop-shadow(0 0 18px rgba(227,168,87,.8));}
   }
   .header-logo{animation:logoBreathe 3.5s ease-in-out infinite;}
 
-  /* Welcome stagger */
   @keyframes fadeSlideUp{
     from{opacity:0;transform:translateY(22px);}
     to  {opacity:1;transform:translateY(0);}
@@ -761,29 +707,23 @@
   .welcome-sub  {animation:fadeSlideUp .45s cubic-bezier(.22,1,.36,1) .09s both;}
   .chips        {animation:fadeSlideUp .45s cubic-bezier(.22,1,.36,1) .18s both;}
 
-  /* Chip lift on hover */
   .chip{transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s,border-color .15s,background .15s;}
   .chip:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 8px 22px rgba(227,168,87,.22);}
   .chip:active{transform:translateY(-1px) scale(0.99);}
 
-  /* Send button pop on click */
   .send-btn:not(:disabled):active{transform:scale(0.84)!important;transition:transform .08s;}
 
-  /* Model option hover lift */
   .model-option{transition:transform .18s cubic-bezier(.22,1,.36,1),background .18s,border-color .18s,box-shadow .18s;}
   .model-option:hover{transform:translateX(3px);}
   .model-option.active{transform:none;}
 
-  /* History entry hover */
   .history-entry{transition:background .15s,transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s;}
   .history-entry:hover{transform:translateX(3px);}
   .history-entry.active{transform:none;}
 
-  /* Sidebar user row pop */
   .sidebar-user{transition:background .15s,transform .18s cubic-bezier(.22,1,.36,1);}
   .sidebar-user:hover{transform:scale(1.02);}
 
-  /* New chat button lift */
   .new-chat-btn{transition:background .15s,box-shadow .2s,transform .18s cubic-bezier(.22,1,.36,1);}
   .new-chat-btn:hover{transform:translateY(-2px);}
   .new-chat-btn:active{transform:translateY(0);}
@@ -791,7 +731,6 @@
 </head>
 <body>
 
-<!-- Auth Screen -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-card">
     <div class="auth-brand">
@@ -818,7 +757,6 @@
   </div>
 </div>
 
-<!-- Main App (hidden until authenticated) -->
 <div class="app" id="app" style="display:none">
 
   <header class="header">
@@ -902,7 +840,6 @@
         <div class="history-empty">Kaydedilen sohbetler burada görünecek</div>
       </div>
 
-      <!-- User section -->
       <div class="user-section" id="userSection">
         <div class="user-row">
           <div class="user-avatar" id="userAvatar">?</div>
@@ -958,7 +895,6 @@
 
 <script>
 (function(){
-  /* ---------- i18n ---------- */
   const STRINGS = {
     tr: {
       langToggle:'EN',
@@ -1066,7 +1002,6 @@
   let lang = localStorage.getItem('pallas-lang') || browserLang;
   function t(key){ return STRINGS[lang][key]; }
 
-  /* ---------- Models ---------- */
   const MODELS = [
     {id:'mini',     name:'Pallas 1',       size:'3B', ollamaModel:'llama3.2:3b',  ramIdle:12, ramActive:28, cpuIdle:4,  cpuActive:38, disk:'1.9 GB', minDelay:200},
     {id:'standard', name:'Pallas 1.1',     size:'7B', ollamaModel:'qwen2.5:7b',   ramIdle:29, ramActive:57, cpuIdle:6,  cpuActive:72, disk:'4.4 GB', minDelay:400},
@@ -1079,9 +1014,8 @@
   let messageCount    = 0;
   let sessionId       = newSessionId();
   let clientSession   = [];
-  let useWebSearch    = false; // off by default — local AI first
+  let useWebSearch    = false;
 
-  /* ---------- Auth state ---------- */
   let authToken   = localStorage.getItem('pallas-token') || null;
   let currentUser = null;
   let authMode    = 'signin';
@@ -1119,7 +1053,6 @@
     toastEl._t = setTimeout(()=> toastEl.classList.remove('show'), 2200);
   }
 
-  /* ---------- Auth helpers ---------- */
   function authHeaders(){
     return {
       'Authorization': `Bearer ${authToken}`,
@@ -1213,7 +1146,6 @@
     showAuthScreen();
   }
 
-  /* ---------- Utility: relative time ---------- */
   function timeAgo(ts){
     if (!ts) return '';
     const diff = Date.now() - ts;
@@ -1227,7 +1159,6 @@
     return lang === 'tr' ? `${days}g önce` : `${days}d ago`;
   }
 
-  /* ---------- Utility: clipboard ---------- */
   function copyText(text, btn, label){
     navigator.clipboard.writeText(text).then(() => {
       btn.classList.add('ok');
@@ -1237,7 +1168,6 @@
     }).catch(()=>{});
   }
 
-  /* ---------- Utility: add copy buttons to code blocks ---------- */
   function addCodeCopyButtons(container){
     container.querySelectorAll('pre').forEach(pre => {
       if (pre.parentElement.classList.contains('code-block-wrap')) return;
@@ -1256,10 +1186,7 @@
     });
   }
 
-  /* ---------- Auth form events ---------- */
   el('authForm').addEventListener('submit', handleAuth);
-
-  // Password visibility toggle
   el('pwToggle').addEventListener('click', ()=>{
     const pw = el('authPassword');
     const isHidden = pw.type === 'password';
@@ -1269,7 +1196,6 @@
       : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
   });
 
-  // Clear auth error when user types
   el('authUsername').addEventListener('input', ()=> el('authError').textContent = '');
   el('authPassword').addEventListener('input', ()=> el('authError').textContent = '');
 
@@ -1290,7 +1216,6 @@
 
   el('logoutBtn').addEventListener('click', logout);
 
-  /* ---------- Server chat sync ---------- */
   async function loadServerChats(){
     if (!authToken) return;
     try {
@@ -1342,7 +1267,6 @@
       if (!res.ok) return;
       const chat = await res.json();
 
-      // Restore thread
       threadInner.innerHTML = '';
       threadInner.appendChild(welcome);
       welcome.style.display = 'none';
@@ -1374,7 +1298,6 @@
         }
       });
 
-      // Restore AI context
       clientSession = chat.sessionMessages || [];
       sessionId = newSessionId();
       await fetch('/api/session/restore', {
@@ -1402,7 +1325,6 @@
     } catch(_){}
   }
 
-  /* ---------- Apply language ---------- */
   function applyAuthLang(){
     el('authTitle').textContent      = t('authWelcome');
     el('authSubtitle').textContent   = t('authSub');
@@ -1457,7 +1379,6 @@
     updateComposerNote();
   });
 
-  /* ---------- Compute gauges (cosmetic) ---------- */
   function setGauges(active){
     const m   = currentModel;
     const ram = active ? rand(m.ramActive-4, m.ramActive+4) : rand(m.ramIdle-3, m.ramIdle+3);
@@ -1472,7 +1393,6 @@
     setGauges(false);
   }
 
-  /* ---------- Model switcher ---------- */
   const modelCard    = el('modelCard');
   const modelOptions = el('modelOptions');
 
@@ -1510,7 +1430,6 @@
   renderModelOptions();
   initGauges();
 
-  /* ---------- Settings popover ---------- */
   const settingsBtn     = el('settingsBtn');
   const settingsPopover = el('settingsPopover');
   settingsBtn.addEventListener('click', (e) => {
@@ -1527,13 +1446,11 @@
   wireSwitch('rowAutostart','switchAutostart');
   wireSwitch('rowUpdate','switchUpdate');
 
-  /* ---------- Mobile sidebar ---------- */
   const sidebar = el('sidebar');
   const overlay = el('overlay');
   el('menuBtn').addEventListener('click', () => { sidebar.classList.add('open'); overlay.classList.add('show'); });
   overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
 
-  /* ---------- Messaging ---------- */
   function scrollToBottom(){ thread.scrollTop = thread.scrollHeight; }
 
   function addUserMessage(text){
@@ -1561,9 +1478,7 @@
       metaEl.textContent = meta;
       msg.appendChild(metaEl);
     }
-    // Copy buttons on code blocks
     addCodeCopyButtons(bubble);
-    // Copy response action
     const respText = bubble.querySelector('.response-text');
     if (respText){
       const actions = document.createElement('div');
@@ -1604,13 +1519,11 @@
     try{ return new URL(url).hostname.replace(/^www\./,''); }catch(e){ return url; }
   }
 
-  /* ---------- Chat API ---------- */
   async function fetchChatResponse(query, modelId, sid, attempt = 0, onRetry = null){
     const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}&search=${useWebSearch}`;
     const res = await fetch(url);
     if (!res.ok && res.status !== 503) throw new Error('chat_failed');
     const data = await res.json();
-    // Retry on Ollama cold-start only (not Groq errors)
     if (data.error === 'ollama_unavailable' && attempt < 5){
       if (onRetry) onRetry(attempt + 1);
       await new Promise(r => setTimeout(r, 5000));
@@ -1692,7 +1605,6 @@
         setGauges(false);
         refreshHwBadge();
 
-        // Track session for save/restore
         if (data.text) {
           clientSession.push({ role: 'user', content: text });
           clientSession.push({ role: 'assistant', content: data.text });
@@ -1759,9 +1671,8 @@
     renderHistory();
   }
 
-  /* ---------- Web search toggle ---------- */
   const webSearchBtn = el('webSearchBtn');
-  webSearchBtn.classList.add('off'); // starts off
+  webSearchBtn.classList.add('off');
   webSearchBtn.addEventListener('click', () => {
     useWebSearch = !useWebSearch;
     webSearchBtn.classList.toggle('off', !useWebSearch);
@@ -1804,16 +1715,13 @@
   });
   sendBtn.addEventListener('click', () => { if (input.value.trim()) sendMessage(input.value); });
 
-  /* ---------- Keyboard shortcuts ---------- */
   document.addEventListener('keydown', (e) => {
-    // Ctrl+/ → new chat
     if (e.ctrlKey && e.key === '/'){
       e.preventDefault();
       if (el('app').style.display !== 'none') resetThread();
     }
   });
 
-  /* ---------- Hardware badge + local model setup ---------- */
   const REQUIRED_MODELS = ['llama3.2:3b', 'qwen2.5:7b'];
 
   async function initHardware() {
@@ -1829,7 +1737,6 @@
         return;
       }
 
-      // Local Ollama — check if models are present
       const missing = REQUIRED_MODELS.filter(m =>
         !hw.models.some(n => n === m || n.startsWith(m.split(':')[0]))
       );
@@ -1921,7 +1828,6 @@
     showHwBadge(badge, hw.gpu);
   }
 
-  // Re-check GPU status after a response (model may have been loaded into GPU)
   function refreshHwBadge() {
     fetch('/api/hardware').then(r => r.json()).then(hw => {
       const badge = document.getElementById('hwBadge');
@@ -1929,7 +1835,6 @@
     }).catch(() => {});
   }
 
-  /* ---------- Init ---------- */
   checkAuth();
   initHardware();
 
