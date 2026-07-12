@@ -29,7 +29,6 @@ const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-// ── Data storage ──────────────────────────────────────────────────────────────
 const DATA_DIR   = process.env.PALLAS_DATA || path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHATS_DIR  = path.join(DATA_DIR, 'chats');
@@ -60,11 +59,9 @@ function getPayload(req) {
   catch (_) { return null; }
 }
 
-// ── In-memory session history ─────────────────────────────────────────────────
 const sessions   = new Map();
 const MAX_HISTORY = 16;
 
-// Never cache the HTML file so the browser always gets fresh JS
 app.use((req, res, next) => {
   if (req.path === '/' || req.path.endsWith('.html')) {
     res.setHeader('Cache-Control', 'no-store');
@@ -74,7 +71,6 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// ── Web search ─────────────────────────────────────────────────────────────────
 async function webSearch(query) {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=tr-tr`;
   const res = await fetch(url, {
@@ -102,7 +98,6 @@ async function webSearch(query) {
   return results;
 }
 
-// ── AI backends ────────────────────────────────────────────────────────────────
 async function ollamaChat(model, messages) {
   const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
     method: 'POST',
@@ -136,7 +131,6 @@ async function aiChat(modelId, messages) {
 }
 
 function stripCJK(text) {
-  // Remove stray CJK characters that qwen sometimes bleeds into responses
   return text.replace(/[　-鿿가-힯豈-﫿]/g, '').replace(/ {2,}/g, ' ').trim();
 }
 
@@ -144,7 +138,6 @@ function isConversational(q) {
   return /^(merhaba|selam|hey|hi|hello|nasıl(sın)?|naber|ne haber|teşekkür|sağ ol|günaydın|iyi günler|iyi akşamlar|görüşürüz|hoşça kal|bye)\b/i.test(q.trim());
 }
 
-// ── Auth endpoints ─────────────────────────────────────────────────────────────
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'missing_fields' });
@@ -186,7 +179,6 @@ app.get('/api/auth/me', (req, res) => {
   res.json({ username: p.username });
 });
 
-// ── Chat history endpoints ─────────────────────────────────────────────────────
 app.get('/api/chats', (req, res) => {
   const p = getPayload(req);
   if (!p) return res.status(401).json({ error: 'unauthorized' });
@@ -225,7 +217,6 @@ app.delete('/api/chats/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Chat endpoint ──────────────────────────────────────────────────────────────
 app.get('/api/chat', async (req, res) => {
   const query   = (req.query.q       || '').toString().trim();
   const modelId = (req.query.model   || 'standard').toString();
@@ -299,7 +290,6 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
-// Returns which models are downloaded + whether GPU is active
 app.get('/api/hardware', async (req, res) => {
   if (USE_GROQ) return res.json({ backend: 'groq', gpu: false, models: [], loaded: [] });
   try {
@@ -318,7 +308,6 @@ app.get('/api/hardware', async (req, res) => {
   }
 });
 
-// Stream model pull progress from Ollama
 app.post('/api/pull', async (req, res) => {
   const { model } = req.body || {};
   if (!model) return res.status(400).json({ error: 'missing model' });

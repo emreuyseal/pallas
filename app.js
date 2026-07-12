@@ -7,15 +7,12 @@ let mainWindow  = null;
 let tray        = null;
 let serverProc  = null;
 
-// ── Start Ollama if not running ───────────────────────────────────────────────
 function tryStartOllama() {
   const exe = path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'Ollama', 'ollama.exe');
   try { spawn(exe, [], { detached: true, stdio: 'ignore' }).unref(); } catch (_) {}
 }
 
-// ── Spawn Node server as a child process ──────────────────────────────────────
 function startServer() {
-  // Find node.exe — check common locations
   const nodeCandidates = [
     'C:\\Program Files\\nodejs\\node.exe',
     'C:\\Program Files (x86)\\nodejs\\node.exe',
@@ -45,7 +42,6 @@ function startServer() {
   serverProc.on('exit', code => console.log('[server exited]', code));
 }
 
-// ── Poll until Express responds ───────────────────────────────────────────────
 async function waitForServer(port = 3000, retries = 40) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -57,7 +53,6 @@ async function waitForServer(port = 3000, retries = 40) {
   return false;
 }
 
-// ── Create main window ────────────────────────────────────────────────────────
 function createWindow() {
   mainWindow = new BrowserWindow({
     width:  1300,
@@ -84,7 +79,6 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-// ── System tray ───────────────────────────────────────────────────────────────
 function createTray() {
   try {
     const icon = nativeImage.createFromPath(path.join(__dirname, 'public', 'logo.png'))
@@ -102,7 +96,6 @@ function createTray() {
   }
 }
 
-// ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
   tryStartOllama();
   startServer();
@@ -118,9 +111,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    // Keep running in tray — don't quit
-  }
+  if (process.platform !== 'darwin') {}
 });
 
 app.on('activate', () => {
