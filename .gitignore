@@ -4,3 +4,9 @@ data/
 dist/
 release/
 *.txt
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
