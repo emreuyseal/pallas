@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "electron": "set ELECTRON_RUN_AS_NODE=&& node_modules\\electron\\dist\\electron.exe .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "engines": {
     "node": ">=18"
@@ -19,7 +21,8 @@
   },
   "devDependencies": {
     "electron": "^33.4.11",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "wrangler": "^4.114.0"
   },
   "build": {
     "appId": "com.pallas.app",
