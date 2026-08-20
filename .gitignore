@@ -4,3 +4,5 @@ data/
 dist/
 release/
 *.txt
+.wrangler/
+cloudflare/out/
