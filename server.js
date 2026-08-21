@@ -56,6 +56,11 @@ function loadUsers() {
 }
 function saveUsers(u) { fs.writeFileSync(USERS_FILE, JSON.stringify(u)); }
 
+function findUserById(users, userId) {
+  const key = Object.keys(users).find((k) => users[k].id === userId);
+  return key ? { key, user: users[key] } : null;
+}
+
 function chatsFile(uid) { return path.join(CHATS_DIR, `${uid}.json`); }
 function loadUserChats(uid) {
   try { return JSON.parse(fs.readFileSync(chatsFile(uid), 'utf8')); }
@@ -191,6 +196,26 @@ app.get('/api/auth/me', (req, res) => {
   const p = getPayload(req);
   if (!p) return res.status(401).json({ error: 'unauthorized' });
   res.json({ username: p.username });
+});
+
+app.post('/api/profile/password', async (req, res) => {
+  const p = getPayload(req);
+  if (!p) return res.status(401).json({ error: 'unauthorized' });
+
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'missing_fields' });
+  if (newPassword.length < 6) return res.status(400).json({ error: 'password_too_short' });
+
+  const users = loadUsers();
+  const found = findUserById(users, p.userId);
+  if (!found) return res.status(401).json({ error: 'unauthorized' });
+
+  const ok = await bcrypt.compare(currentPassword, found.user.hash);
+  if (!ok) return res.status(401).json({ error: 'current_password_invalid' });
+
+  found.user.hash = await bcrypt.hash(newPassword, 10);
+  saveUsers(users);
+  res.json({ ok: true });
 });
 
 app.post('/api/profile/avatar', express.raw({ type: Object.keys(AVATAR_EXT_BY_TYPE), limit: '2mb' }), (req, res) => {

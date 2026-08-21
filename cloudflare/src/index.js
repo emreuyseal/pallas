@@ -95,6 +95,7 @@ async function checkRateLimit(env, bucket, id, max, windowSeconds) {
 }
 
 const RESET_TOKEN_TTL_SECONDS = 30 * 60;
+const VERIFY_TOKEN_TTL_SECONDS = 24 * 60 * 60;
 const RESEND_BASE = 'https://api.resend.com/emails';
 const RESET_FROM = 'Pallas <noreply@pallasation.com>';
 
@@ -102,24 +103,33 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-async function sendResetEmail(env, to, resetUrl) {
+function generateToken() {
+  return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+}
+
+async function sendEmail(env, to, subject, html) {
   if (!env.RESEND_API_KEY) throw new Error('resend_api_key_missing');
   const res = await fetch(RESEND_BASE, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: RESET_FROM,
-      to: [to],
-      subject: 'Pallas — Şifre sıfırlama',
-      html: `<p>Pallas hesabının şifresini sıfırlamak için isteği sen yaptıysan aşağıdaki bağlantıya tıkla:</p>
-<p><a href="${resetUrl}">${resetUrl}</a></p>
-<p>Bu bağlantı 30 dakika geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>`,
-    }),
+    body: JSON.stringify({ from: RESET_FROM, to: [to], subject, html }),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`resend_http_${res.status}: ${body.slice(0, 200)}`);
   }
+}
+
+async function sendResetEmail(env, to, resetUrl) {
+  await sendEmail(env, to, 'Pallas — Şifre sıfırlama', `<p>Pallas hesabının şifresini sıfırlamak için isteği sen yaptıysan aşağıdaki bağlantıya tıkla:</p>
+<p><a href="${resetUrl}">${resetUrl}</a></p>
+<p>Bu bağlantı 30 dakika geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>`);
+}
+
+async function sendVerificationEmail(env, to, verifyUrl) {
+  await sendEmail(env, to, 'Pallas — E-postanı doğrula', `<p>Pallas hesabına hoş geldin! E-posta adresini doğrulamak için aşağıdaki bağlantıya tıkla:</p>
+<p><a href="${verifyUrl}">${verifyUrl}</a></p>
+<p>Bu bağlantı 24 saat geçerlidir.</p>`);
 }
 
 async function groqChat(env, model, messages) {
@@ -162,8 +172,45 @@ app.post('/api/auth/register', async (c) => {
     'INSERT INTO users (id, username, username_lower, hash, email, created_at) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(userId, username, key, hash, emailKey, Date.now()).run();
 
+  const verifyToken = generateToken();
+  await c.env.SESSIONS.put(`verify:${verifyToken}`, JSON.stringify({ userId }), {
+    expirationTtl: VERIFY_TOKEN_TTL_SECONDS,
+  });
+  try { await sendVerificationEmail(c.env, emailKey, `https://app.pallasation.com/?verify=${verifyToken}`); } catch (_) {}
+
   const token = await signToken({ userId, username }, c.env.JWT_SECRET);
   return c.json({ token, username });
+});
+
+app.post('/api/auth/verify-email', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { token } = body || {};
+  if (!token) return c.json({ error: 'missing_fields' }, 400);
+
+  const stored = await c.env.SESSIONS.get(`verify:${token}`, 'json');
+  if (!stored) return c.json({ error: 'invalid_or_expired_token' }, 400);
+
+  await c.env.DB.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').bind(stored.userId).run();
+  await c.env.SESSIONS.delete(`verify:${token}`);
+  return c.json({ ok: true });
+});
+
+app.post('/api/auth/resend-verification', async (c) => {
+  const p = await requireAuth(c);
+  if (!p) return c.json({ error: 'unauthorized' }, 401);
+
+  const allowed = await checkRateLimit(c.env, 'resend-verify', p.userId, 3, 15 * 60);
+  if (!allowed) return c.json({ ok: true });
+
+  const user = await c.env.DB.prepare('SELECT email, email_verified FROM users WHERE id = ?').bind(p.userId).first();
+  if (!user || !user.email || user.email_verified) return c.json({ ok: true });
+
+  const verifyToken = generateToken();
+  await c.env.SESSIONS.put(`verify:${verifyToken}`, JSON.stringify({ userId: p.userId }), {
+    expirationTtl: VERIFY_TOKEN_TTL_SECONDS,
+  });
+  try { await sendVerificationEmail(c.env, user.email, `https://app.pallasation.com/?verify=${verifyToken}`); } catch (_) {}
+  return c.json({ ok: true });
 });
 
 app.post('/api/auth/forgot-password', async (c) => {
@@ -179,7 +226,7 @@ app.post('/api/auth/forgot-password', async (c) => {
   const user = await c.env.DB.prepare('SELECT id, username FROM users WHERE email = ?')
     .bind(email.toLowerCase()).first();
   if (user) {
-    const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const token = generateToken();
     await c.env.SESSIONS.put(`reset:${token}`, JSON.stringify({ userId: user.id }), {
       expirationTtl: RESET_TOKEN_TTL_SECONDS,
     });
@@ -223,7 +270,32 @@ app.post('/api/auth/login', async (c) => {
 app.get('/api/auth/me', async (c) => {
   const p = await requireAuth(c);
   if (!p) return c.json({ error: 'unauthorized' }, 401);
-  return c.json({ username: p.username });
+  const user = await c.env.DB.prepare('SELECT email, email_verified FROM users WHERE id = ?').bind(p.userId).first();
+  return c.json({
+    username: p.username,
+    email: user?.email || null,
+    emailVerified: !!user?.email_verified,
+  });
+});
+
+app.post('/api/profile/password', async (c) => {
+  const p = await requireAuth(c);
+  if (!p) return c.json({ error: 'unauthorized' }, 401);
+
+  const body = await c.req.json().catch(() => ({}));
+  const { currentPassword, newPassword } = body || {};
+  if (!currentPassword || !newPassword) return c.json({ error: 'missing_fields' }, 400);
+  if (newPassword.length < 6) return c.json({ error: 'password_too_short' }, 400);
+
+  const user = await c.env.DB.prepare('SELECT hash FROM users WHERE id = ?').bind(p.userId).first();
+  if (!user) return c.json({ error: 'unauthorized' }, 401);
+
+  const ok = await bcrypt.compare(currentPassword, user.hash);
+  if (!ok) return c.json({ error: 'current_password_invalid' }, 401);
+
+  const hash = await bcrypt.hash(newPassword, 10);
+  await c.env.DB.prepare('UPDATE users SET hash = ? WHERE id = ?').bind(hash, p.userId).run();
+  return c.json({ ok: true });
 });
 
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;

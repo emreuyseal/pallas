@@ -139,6 +139,19 @@
   }
   .auth-link:hover{color:var(--accent);}
 
+  .modal-overlay{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,.5);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .popover-action-btn{
+    background:var(--accent-soft);color:var(--accent);
+    border:1px solid var(--accent-dim);border-radius:6px;
+    padding:4px 9px;font-size:11px;font-weight:600;flex-shrink:0;
+  }
+  .popover-action-btn:hover{background:var(--accent-dim);}
+  .popover-action-btn:disabled{opacity:.5;cursor:not-allowed;}
+
   .app{height:100vh;display:flex;flex-direction:column;}
   .header{
     height:56px;flex-shrink:0;
@@ -784,6 +797,22 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="pwModalOverlay" style="display:none">
+  <div class="auth-card" style="width:320px">
+    <h2 class="auth-title" id="pwModalTitle">Şifreni değiştir</h2>
+    <form id="pwChangeForm">
+      <input type="password" class="auth-input" id="pwCurrent" placeholder="Mevcut şifre" autocomplete="current-password"/>
+      <input type="password" class="auth-input" id="pwNew" placeholder="Yeni şifre" autocomplete="new-password"/>
+      <button type="submit" class="auth-btn" id="pwChangeSubmit">Güncelle</button>
+    </form>
+    <div class="auth-error" id="pwChangeError"></div>
+    <div class="auth-success" id="pwChangeSuccess"></div>
+    <div class="auth-link-row center">
+      <button type="button" class="auth-link" id="pwModalClose">Vazgeç</button>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="app" style="display:none">
 
   <header class="header">
@@ -823,6 +852,14 @@
             <div class="popover-sub" id="subUsage">Kapalı — her zaman. Değiştirilecek bir şey yok.</div>
           </div>
           <div class="switch locked"></div>
+        </div>
+        <div class="popover-divider"></div>
+        <div class="popover-row" id="rowChangePassword" style="cursor:pointer">
+          <div><div class="popover-label" id="labelChangePassword">Şifreni değiştir</div><div class="popover-sub" id="subChangePassword">Hesap şifreni güncelle</div></div>
+        </div>
+        <div class="popover-row" id="rowEmailVerify" style="display:none">
+          <div><div class="popover-label" id="labelEmailVerify">E-posta doğrulaması</div><div class="popover-sub" id="subEmailVerify">—</div></div>
+          <button type="button" class="popover-action-btn" id="resendVerifyBtn" style="display:none">Gönder</button>
         </div>
       </div>
     </div>
@@ -993,6 +1030,22 @@
       avatarErrSize:'Dosya çok büyük (en fazla 1.5MB).',
       avatarErrUpload:'Yükleme başarısız oldu, tekrar dene.',
       avatarUploadTitle:'Profil fotoğrafı yükle',
+      labelChangePassword:'Şifreni değiştir',
+      subChangePassword:'Hesap şifreni güncelle',
+      pwModalTitle:'Şifreni değiştir',
+      pwCurrentPlaceholder:'Mevcut şifre',
+      pwNewPlaceholder:'Yeni şifre',
+      pwChangeSubmit:'Güncelle',
+      pwModalClose:'Vazgeç',
+      pwChangeSuccessMsg:'Şifren güncellendi.',
+      pwErrCurrentInvalid:'Mevcut şifre yanlış.',
+      emailVerified:'Doğrulandı ✓',
+      emailNotVerified:'Doğrulanmadı',
+      emailResendBtn:'Tekrar gönder',
+      emailResendSent:'Doğrulama e-postası tekrar gönderildi.',
+      emailVerifySuccess:'E-postan doğrulandı!',
+      emailVerifyFailed:'Bağlantının süresi dolmuş veya geçersiz.',
+      registerCheckEmail:'Hesabın oluşturuldu! E-postanı doğrulamak için gelen kutunu kontrol et.',
     },
     en: {
       langToggle:'TR',
@@ -1063,6 +1116,22 @@
       avatarErrSize:'File is too large (max 1.5MB).',
       avatarErrUpload:'Upload failed, try again.',
       avatarUploadTitle:'Upload profile photo',
+      labelChangePassword:'Change password',
+      subChangePassword:'Update your account password',
+      pwModalTitle:'Change your password',
+      pwCurrentPlaceholder:'Current password',
+      pwNewPlaceholder:'New password',
+      pwChangeSubmit:'Update',
+      pwModalClose:'Cancel',
+      pwChangeSuccessMsg:'Your password has been updated.',
+      pwErrCurrentInvalid:'Current password is incorrect.',
+      emailVerified:'Verified ✓',
+      emailNotVerified:'Not verified',
+      emailResendBtn:'Resend',
+      emailResendSent:'Verification email sent again.',
+      emailVerifySuccess:'Your email has been verified!',
+      emailVerifyFailed:'That link expired or is invalid.',
+      registerCheckEmail:'Account created! Check your inbox to verify your email.',
     },
   };
 
@@ -1100,7 +1169,9 @@
     invalid_or_expired_token: 'authErrResetInvalid',
   };
 
-  let backendType = null;
+  let backendType   = null;
+  let userEmail     = null;
+  let emailVerified = false;
   const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
   const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
@@ -1142,7 +1213,9 @@
       const res = await fetch('/api/auth/me', { headers: authHeaders() });
       if (!res.ok){ clearAuth(); showAuthScreen(); return; }
       const data = await res.json();
-      currentUser = data.username;
+      currentUser   = data.username;
+      userEmail     = data.email || null;
+      emailVerified = !!data.emailVerified;
       showApp();
     } catch(_){ showAuthScreen(); }
   }
@@ -1150,6 +1223,8 @@
   function clearAuth(){
     authToken = null;
     currentUser = null;
+    userEmail = null;
+    emailVerified = false;
     localStorage.removeItem('pallas-token');
   }
 
@@ -1192,6 +1267,20 @@
     el('userName').textContent = currentUser;
     showInitialsAvatar();
     loadAvatar();
+    updateEmailVerifyRow();
+  }
+
+  function updateEmailVerifyRow(){
+    const row = el('rowEmailVerify');
+    const btn = el('resendVerifyBtn');
+    if (backendType !== 'groq' || !userEmail){
+      row.style.display = 'none';
+      return;
+    }
+    row.style.display = '';
+    el('subEmailVerify').textContent = emailVerified ? t('emailVerified') : t('emailNotVerified');
+    btn.style.display = emailVerified ? 'none' : '';
+    btn.textContent = t('emailResendBtn');
   }
 
   function showInitialsAvatar(){
@@ -1295,12 +1384,22 @@
         if (!res.ok){
           errEl.textContent = t(AUTH_ERRORS[data.error] || 'authErrServer');
         } else {
+          const wasRegister = authMode === 'register';
           authToken   = data.token;
           currentUser = data.username;
           localStorage.setItem('pallas-token', authToken);
           el('authUsername').value = '';
           el('authPassword').value = '';
           el('authEmail').value = '';
+          try {
+            const meRes = await fetch('/api/auth/me', { headers: authHeaders() });
+            if (meRes.ok){
+              const me = await meRes.json();
+              userEmail     = me.email || null;
+              emailVerified = !!me.emailVerified;
+            }
+          } catch(_){}
+          if (wasRegister && backendType === 'groq') showToast(t('registerCheckEmail'));
           showApp();
         }
       }
@@ -1390,6 +1489,86 @@
     e.target.value = '';
     if (file) uploadAvatar(file);
   });
+
+  el('resendVerifyBtn').addEventListener('click', async ()=>{
+    const btn = el('resendVerifyBtn');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/auth/resend-verification', { method: 'POST', headers: authHeaders() });
+      showToast(res.ok ? t('emailResendSent') : t('authErrServer'));
+    } catch(_){
+      showToast(t('authErrServer'));
+    }
+    btn.disabled = false;
+  });
+
+  const PASSWORD_ERRORS = {
+    missing_fields: 'authErrMissing',
+    password_too_short: 'authErrShortPass',
+    current_password_invalid: 'pwErrCurrentInvalid',
+  };
+
+  el('rowChangePassword').addEventListener('click', ()=>{
+    el('pwCurrent').value = '';
+    el('pwNew').value = '';
+    el('pwChangeError').textContent = '';
+    el('pwChangeSuccess').textContent = '';
+    el('pwModalOverlay').style.display = 'flex';
+    setTimeout(()=> el('pwCurrent').focus(), 50);
+  });
+  el('pwModalClose').addEventListener('click', ()=>{
+    el('pwModalOverlay').style.display = 'none';
+  });
+  el('pwChangeForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const currentPassword = el('pwCurrent').value;
+    const newPassword     = el('pwNew').value;
+    const errEl     = el('pwChangeError');
+    const successEl = el('pwChangeSuccess');
+    const btn       = el('pwChangeSubmit');
+    errEl.textContent = '';
+    successEl.textContent = '';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/profile/password', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok){
+        errEl.textContent = t(PASSWORD_ERRORS[data.error] || 'authErrServer');
+      } else {
+        successEl.textContent = t('pwChangeSuccessMsg');
+        setTimeout(()=> el('pwModalOverlay').style.display = 'none', 1200);
+      }
+    } catch(_){
+      errEl.textContent = t('authErrServer');
+    }
+    btn.disabled = false;
+  });
+
+  async function checkVerifyToken(){
+    const token = new URLSearchParams(location.search).get('verify');
+    if (!token) return;
+    history.replaceState(null, '', location.pathname);
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      if (res.ok){
+        emailVerified = true;
+        updateEmailVerifyRow();
+        showToast(t('emailVerifySuccess'));
+      } else {
+        showToast(t('emailVerifyFailed'));
+      }
+    } catch(_){
+      showToast(t('emailVerifyFailed'));
+    }
+  }
 
   async function loadServerChats(){
     if (!authToken) return;
@@ -1569,6 +1748,14 @@
     el('composerNote').textContent   = t('composerNote');
     el('logoutBtn').title            = t('logoutTitle');
     el('userAvatar').title           = t('avatarUploadTitle');
+    el('labelChangePassword').textContent = t('labelChangePassword');
+    el('subChangePassword').textContent   = t('subChangePassword');
+    el('pwModalTitle').textContent        = t('pwModalTitle');
+    el('pwCurrent').placeholder           = t('pwCurrentPlaceholder');
+    el('pwNew').placeholder               = t('pwNewPlaceholder');
+    el('pwChangeSubmit').textContent      = t('pwChangeSubmit');
+    el('pwModalClose').textContent        = t('pwModalClose');
+    updateEmailVerifyRow();
     input.placeholder = t('placeholder');
     document.querySelectorAll('.chip').forEach((chip, i) => {
       const c = t('chips')[i];
@@ -2050,6 +2237,7 @@
 
   checkAuth();
   initHardware();
+  checkVerifyToken();
 
 })();
 </script>

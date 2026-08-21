@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   username_lower TEXT NOT NULL UNIQUE,
   hash TEXT NOT NULL,
   email TEXT,
+  email_verified INTEGER DEFAULT 0,
   avatar_type TEXT,
   avatar_updated_at INTEGER,
   created_at INTEGER NOT NULL
