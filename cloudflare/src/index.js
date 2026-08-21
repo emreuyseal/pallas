@@ -82,6 +82,18 @@ async function webSearch(query) {
   return results;
 }
 
+const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+
+async function checkRateLimit(env, ip) {
+  const key = `ratelimit:chat:${ip}`;
+  const current = await env.SESSIONS.get(key);
+  const count = current ? parseInt(current, 10) : 0;
+  if (count >= RATE_LIMIT_MAX) return false;
+  await env.SESSIONS.put(key, String(count + 1), { expirationTtl: RATE_LIMIT_WINDOW_SECONDS });
+  return true;
+}
+
 async function groqChat(env, model, messages) {
   if (!env.GROQ_API_KEY) throw new Error('groq_api_key_missing');
   const res = await fetch(`${GROQ_BASE}/chat/completions`, {
@@ -217,6 +229,10 @@ app.get('/api/chat', async (c) => {
   const searchParam = c.req.query('search');
 
   if (!query) return c.json({ error: 'missing_query' }, 400);
+
+  const ip = c.req.header('cf-connecting-ip') || 'unknown';
+  const allowed = await checkRateLimit(c.env, ip);
+  if (!allowed) return c.json({ error: 'rate_limited', results: [] }, 429);
 
   const sessionKey = sid ? `session:${sid}` : null;
   let history = [];

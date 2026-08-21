@@ -1527,7 +1527,7 @@
   async function fetchChatResponse(query, modelId, sid, attempt = 0, onRetry = null){
     const url = `/api/chat?q=${encodeURIComponent(query)}&model=${encodeURIComponent(modelId)}&session=${encodeURIComponent(sid)}&lang=${encodeURIComponent(lang)}&search=${useWebSearch}`;
     const res = await fetch(url);
-    if (!res.ok && res.status !== 503) throw new Error('chat_failed');
+    if (!res.ok && res.status !== 503 && res.status !== 429) throw new Error('chat_failed');
     const data = await res.json();
     if (data.error === 'ollama_unavailable' && attempt < 5){
       if (onRetry) onRetry(attempt + 1);
@@ -1550,6 +1550,9 @@
     }
     if (data.error === 'groq_unavailable'){
       return `<div class="search-error">${lang==='tr' ? 'AI servisi şu an yanıt vermiyor. Biraz bekleyip tekrar dene.' : 'AI service isn\'t responding right now. Try again in a moment.'}</div>`;
+    }
+    if (data.error === 'rate_limited'){
+      return `<div class="search-error">${lang==='tr' ? 'Çok fazla istek gönderdin, birkaç saniye bekleyip tekrar dene.' : 'Too many requests — wait a few seconds and try again.'}</div>`;
     }
     let html = '';
     if (data.text){
