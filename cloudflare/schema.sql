@@ -3,8 +3,11 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL,
   username_lower TEXT NOT NULL UNIQUE,
   hash TEXT NOT NULL,
+  email TEXT,
   created_at INTEGER NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS chats (
   id TEXT NOT NULL,

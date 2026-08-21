@@ -85,13 +85,41 @@ async function webSearch(query) {
 const RATE_LIMIT_MAX = 20;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 
-async function checkRateLimit(env, ip) {
-  const key = `ratelimit:chat:${ip}`;
+async function checkRateLimit(env, bucket, id, max, windowSeconds) {
+  const key = `ratelimit:${bucket}:${id}`;
   const current = await env.SESSIONS.get(key);
   const count = current ? parseInt(current, 10) : 0;
-  if (count >= RATE_LIMIT_MAX) return false;
-  await env.SESSIONS.put(key, String(count + 1), { expirationTtl: RATE_LIMIT_WINDOW_SECONDS });
+  if (count >= max) return false;
+  await env.SESSIONS.put(key, String(count + 1), { expirationTtl: windowSeconds });
   return true;
+}
+
+const RESET_TOKEN_TTL_SECONDS = 30 * 60;
+const RESEND_BASE = 'https://api.resend.com/emails';
+const RESET_FROM = 'Pallas <noreply@pallasation.com>';
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function sendResetEmail(env, to, resetUrl) {
+  if (!env.RESEND_API_KEY) throw new Error('resend_api_key_missing');
+  const res = await fetch(RESEND_BASE, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: RESET_FROM,
+      to: [to],
+      subject: 'Pallas — Şifre sıfırlama',
+      html: `<p>Pallas hesabının şifresini sıfırlamak için isteği sen yaptıysan aşağıdaki bağlantıya tıkla:</p>
+<p><a href="${resetUrl}">${resetUrl}</a></p>
+<p>Bu bağlantı 30 dakika geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>`,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`resend_http_${res.status}: ${body.slice(0, 200)}`);
+  }
 }
 
 async function groqChat(env, model, messages) {
@@ -114,24 +142,66 @@ const app = new Hono();
 
 app.post('/api/auth/register', async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { username, password } = body || {};
-  if (!username || !password) return c.json({ error: 'missing_fields' }, 400);
+  const { username, password, email } = body || {};
+  if (!username || !password || !email) return c.json({ error: 'missing_fields' }, 400);
   if (username.length < 2 || username.length > 32) return c.json({ error: 'username_length' }, 400);
   if (!/^[a-zA-Z0-9_.-]+$/.test(username)) return c.json({ error: 'username_invalid' }, 400);
   if (password.length < 6) return c.json({ error: 'password_too_short' }, 400);
+  if (!isValidEmail(email)) return c.json({ error: 'email_invalid' }, 400);
 
   const key = username.toLowerCase();
+  const emailKey = email.toLowerCase();
   const existing = await c.env.DB.prepare('SELECT id FROM users WHERE username_lower = ?').bind(key).first();
   if (existing) return c.json({ error: 'username_taken' }, 409);
+  const existingEmail = await c.env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(emailKey).first();
+  if (existingEmail) return c.json({ error: 'email_taken' }, 409);
 
   const hash = await bcrypt.hash(password, 10);
   const userId = crypto.randomUUID();
   await c.env.DB.prepare(
-    'INSERT INTO users (id, username, username_lower, hash, created_at) VALUES (?, ?, ?, ?, ?)'
-  ).bind(userId, username, key, hash, Date.now()).run();
+    'INSERT INTO users (id, username, username_lower, hash, email, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(userId, username, key, hash, emailKey, Date.now()).run();
 
   const token = await signToken({ userId, username }, c.env.JWT_SECRET);
   return c.json({ token, username });
+});
+
+app.post('/api/auth/forgot-password', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { email } = body || {};
+  if (!email || !isValidEmail(email)) return c.json({ ok: true });
+
+  const emailAllowed = await checkRateLimit(c.env, 'forgot-email', email.toLowerCase(), 3, 15 * 60);
+  const ip = c.req.header('cf-connecting-ip') || 'unknown';
+  const ipAllowed = await checkRateLimit(c.env, 'forgot-ip', ip, 10, 15 * 60);
+  if (!emailAllowed || !ipAllowed) return c.json({ ok: true });
+
+  const user = await c.env.DB.prepare('SELECT id, username FROM users WHERE email = ?')
+    .bind(email.toLowerCase()).first();
+  if (user) {
+    const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    await c.env.SESSIONS.put(`reset:${token}`, JSON.stringify({ userId: user.id }), {
+      expirationTtl: RESET_TOKEN_TTL_SECONDS,
+    });
+    const resetUrl = `https://app.pallasation.com/?reset=${token}`;
+    try { await sendResetEmail(c.env, email.toLowerCase(), resetUrl); } catch (_) {}
+  }
+  return c.json({ ok: true });
+});
+
+app.post('/api/auth/reset-password', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { token, password } = body || {};
+  if (!token || !password) return c.json({ error: 'missing_fields' }, 400);
+  if (password.length < 6) return c.json({ error: 'password_too_short' }, 400);
+
+  const stored = await c.env.SESSIONS.get(`reset:${token}`, 'json');
+  if (!stored) return c.json({ error: 'invalid_or_expired_token' }, 400);
+
+  const hash = await bcrypt.hash(password, 10);
+  await c.env.DB.prepare('UPDATE users SET hash = ? WHERE id = ?').bind(hash, stored.userId).run();
+  await c.env.SESSIONS.delete(`reset:${token}`);
+  return c.json({ ok: true });
 });
 
 app.post('/api/auth/login', async (c) => {
@@ -231,7 +301,7 @@ app.get('/api/chat', async (c) => {
   if (!query) return c.json({ error: 'missing_query' }, 400);
 
   const ip = c.req.header('cf-connecting-ip') || 'unknown';
-  const allowed = await checkRateLimit(c.env, ip);
+  const allowed = await checkRateLimit(c.env, 'chat', ip, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SECONDS);
   if (!allowed) return c.json({ error: 'rate_limited', results: [] }, 429);
 
   const sessionKey = sid ? `session:${sid}` : null;

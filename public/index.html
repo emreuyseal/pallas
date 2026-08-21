@@ -126,6 +126,18 @@
     margin-top:11px;min-height:16px;
     text-align:center;
   }
+  .auth-success{
+    font-size:12px;color:var(--green);
+    margin-top:11px;text-align:center;
+  }
+  .auth-link-row{display:flex;justify-content:flex-end;margin:-4px 0 10px;}
+  .auth-link-row.center{justify-content:center;margin-top:14px;}
+  .auth-link{
+    background:none;border:none;padding:0;
+    font-size:12px;color:var(--text-secondary);
+    text-decoration:underline;
+  }
+  .auth-link:hover{color:var(--accent);}
 
   .app{height:100vh;display:flex;flex-direction:column;}
   .header{
@@ -744,21 +756,29 @@
     </div>
     <h2 class="auth-title" id="authTitle">Hoş geldin</h2>
     <p class="auth-sub" id="authSubtitle">Sohbet geçmişini kaydetmek için giriş yap</p>
-    <div class="auth-tabs">
+    <div class="auth-tabs" id="authTabs">
       <button class="auth-tab active" id="tabSignin">Giriş yap</button>
       <button class="auth-tab" id="tabRegister">Hesap oluştur</button>
     </div>
     <form id="authForm">
       <input type="text" class="auth-input" id="authUsername" placeholder="Kullanıcı adı" autocomplete="username" spellcheck="false"/>
-      <div class="password-wrap">
+      <input type="email" class="auth-input" id="authEmail" placeholder="E-posta" autocomplete="email" style="display:none"/>
+      <div class="password-wrap" id="authPasswordWrap">
         <input type="password" class="auth-input" id="authPassword" placeholder="Şifre" autocomplete="current-password"/>
         <button type="button" class="pw-toggle" id="pwToggle" tabindex="-1">
           <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
+      <div class="auth-link-row" id="authForgotRow" style="display:none">
+        <button type="button" class="auth-link" id="authForgotLink">Şifreni mi unuttun?</button>
+      </div>
       <button type="submit" class="auth-btn" id="authSubmit">Giriş yap</button>
     </form>
+    <div class="auth-link-row center" id="authBackRow" style="display:none">
+      <button type="button" class="auth-link" id="authBackLink">Girişe dön</button>
+    </div>
     <div class="auth-error" id="authError"></div>
+    <div class="auth-success" id="authSuccess"></div>
   </div>
 </div>
 
@@ -949,6 +969,21 @@
       authErrTaken:'Bu kullanıcı adı alınmış.',
       authErrCredentials:'Kullanıcı adı veya şifre hatalı.',
       authErrServer:'Sunucu hatası. Lütfen tekrar dene.',
+      authEmailPlaceholder:'E-posta',
+      authErrEmailInvalid:'Geçerli bir e-posta adresi gir.',
+      authErrEmailTaken:'Bu e-posta zaten kullanılıyor.',
+      authForgotLink:'Şifreni mi unuttun?',
+      authBackLink:'Girişe dön',
+      authForgotTitle:'Şifreni sıfırla',
+      authForgotSub:'E-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim',
+      authSubmitForgot:'Sıfırlama bağlantısı gönder',
+      authForgotSent:'E-postana bir bağlantı gönderdik (varsa). Gelen kutunu kontrol et.',
+      authResetTitle:'Yeni şifre belirle',
+      authResetSub:'Hesabın için yeni bir şifre gir',
+      authResetPassPlaceholder:'Yeni şifre',
+      authSubmitReset:'Şifreyi güncelle',
+      authResetSuccess:'Şifren güncellendi. Şimdi giriş yapabilirsin.',
+      authErrResetInvalid:'Bağlantının süresi dolmuş veya geçersiz. Tekrar deneyebilirsin.',
       logoutTitle:'Çıkış yap',
     },
     en: {
@@ -999,6 +1034,21 @@
       authErrTaken:'That username is already taken.',
       authErrCredentials:'Incorrect username or password.',
       authErrServer:'Server error. Please try again.',
+      authEmailPlaceholder:'Email',
+      authErrEmailInvalid:'Enter a valid email address.',
+      authErrEmailTaken:'That email is already in use.',
+      authForgotLink:'Forgot your password?',
+      authBackLink:'Back to sign in',
+      authForgotTitle:'Reset your password',
+      authForgotSub:'Enter your email and we\'ll send you a reset link',
+      authSubmitForgot:'Send reset link',
+      authForgotSent:'If that email exists, we sent a reset link. Check your inbox.',
+      authResetTitle:'Set a new password',
+      authResetSub:'Enter a new password for your account',
+      authResetPassPlaceholder:'New password',
+      authSubmitReset:'Update password',
+      authResetSuccess:'Your password has been updated. You can sign in now.',
+      authErrResetInvalid:'That link expired or is invalid. You can request a new one.',
       logoutTitle:'Sign out',
     },
   };
@@ -1032,7 +1082,12 @@
     password_too_short:'authErrShortPass',
     username_taken:    'authErrTaken',
     invalid_credentials:'authErrCredentials',
+    email_invalid:     'authErrEmailInvalid',
+    email_taken:       'authErrEmailTaken',
+    invalid_or_expired_token: 'authErrResetInvalid',
   };
+
+  let backendType = null;
 
   function newSessionId(){
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -1083,11 +1138,30 @@
     localStorage.removeItem('pallas-token');
   }
 
+  let resetToken = null;
+
+  function setAuthMode(mode){
+    authMode = mode;
+    el('authError').textContent = '';
+    el('authSuccess').textContent = '';
+    el('tabSignin').classList.toggle('active', mode === 'signin');
+    el('tabRegister').classList.toggle('active', mode === 'register');
+    applyAuthLang();
+    const focusId = mode === 'reset' ? 'authPassword' : mode === 'forgot' ? 'authEmail' : 'authUsername';
+    setTimeout(()=> el(focusId).focus(), 80);
+  }
+
   function showAuthScreen(){
     el('authScreen').style.display = 'flex';
     el('app').style.display = 'none';
-    applyAuthLang();
-    setTimeout(()=> el('authUsername').focus(), 80);
+    const tokenFromUrl = new URLSearchParams(location.search).get('reset');
+    if (tokenFromUrl){
+      resetToken = tokenFromUrl;
+      setAuthMode('reset');
+    } else {
+      applyAuthLang();
+      setTimeout(()=> el('authUsername').focus(), 80);
+    }
   }
 
   async function showApp(){
@@ -1106,31 +1180,70 @@
 
   async function handleAuth(e){
     e.preventDefault();
-    const username = el('authUsername').value.trim();
-    const password = el('authPassword').value;
-    const errEl    = el('authError');
+    const errEl     = el('authError');
+    const successEl = el('authSuccess');
     const submitBtn = el('authSubmit');
-
     errEl.textContent = '';
+    successEl.textContent = '';
     submitBtn.disabled = true;
 
-    const endpoint = authMode === 'signin' ? '/api/auth/login' : '/api/auth/register';
     try {
-      const res  = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok){
-        errEl.textContent = t(AUTH_ERRORS[data.error] || 'authErrServer');
+      if (authMode === 'forgot'){
+        const email = el('authEmail').value.trim();
+        if (!email){ errEl.textContent = t('authErrEmailInvalid'); submitBtn.disabled = false; return; }
+        await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }).then(r => r.json()).catch(() => ({}));
+        successEl.textContent = t('authForgotSent');
+      } else if (authMode === 'reset'){
+        const password = el('authPassword').value;
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: resetToken, password }),
+        });
+        const data = await res.json();
+        if (!res.ok){
+          errEl.textContent = t(AUTH_ERRORS[data.error] || 'authErrServer');
+        } else {
+          resetToken = null;
+          history.replaceState(null, '', location.pathname);
+          setAuthMode('signin');
+          el('authSuccess').textContent = t('authResetSuccess');
+        }
       } else {
-        authToken   = data.token;
-        currentUser = data.username;
-        localStorage.setItem('pallas-token', authToken);
-        el('authUsername').value = '';
-        el('authPassword').value = '';
-        showApp();
+        const username = el('authUsername').value.trim();
+        const password = el('authPassword').value;
+        const email    = el('authEmail').value.trim();
+        if (authMode === 'register' && backendType === 'groq' && !email){
+          errEl.textContent = t('authErrEmailInvalid');
+          submitBtn.disabled = false;
+          return;
+        }
+
+        const endpoint = authMode === 'signin' ? '/api/auth/login' : '/api/auth/register';
+        const body = { username, password };
+        if (authMode === 'register' && backendType === 'groq') body.email = email;
+
+        const res  = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok){
+          errEl.textContent = t(AUTH_ERRORS[data.error] || 'authErrServer');
+        } else {
+          authToken   = data.token;
+          currentUser = data.username;
+          localStorage.setItem('pallas-token', authToken);
+          el('authUsername').value = '';
+          el('authPassword').value = '';
+          el('authEmail').value = '';
+          showApp();
+        }
       }
     } catch(_){
       errEl.textContent = t('authErrServer');
@@ -1203,21 +1316,12 @@
 
   el('authUsername').addEventListener('input', ()=> el('authError').textContent = '');
   el('authPassword').addEventListener('input', ()=> el('authError').textContent = '');
+  el('authEmail').addEventListener('input', ()=> el('authError').textContent = '');
 
-  el('tabSignin').addEventListener('click', ()=>{
-    authMode = 'signin';
-    el('tabSignin').classList.add('active');
-    el('tabRegister').classList.remove('active');
-    el('authError').textContent = '';
-    applyAuthLang();
-  });
-  el('tabRegister').addEventListener('click', ()=>{
-    authMode = 'register';
-    el('tabRegister').classList.add('active');
-    el('tabSignin').classList.remove('active');
-    el('authError').textContent = '';
-    applyAuthLang();
-  });
+  el('tabSignin').addEventListener('click', ()=> setAuthMode('signin'));
+  el('tabRegister').addEventListener('click', ()=> setAuthMode('register'));
+  el('authForgotLink').addEventListener('click', ()=> setAuthMode('forgot'));
+  el('authBackLink').addEventListener('click', ()=> setAuthMode('signin'));
 
   el('logoutBtn').addEventListener('click', logout);
 
@@ -1331,13 +1435,45 @@
   }
 
   function applyAuthLang(){
-    el('authTitle').textContent      = t('authWelcome');
-    el('authSubtitle').textContent   = t('authSub');
     el('tabSignin').textContent      = t('authTabSignin');
     el('tabRegister').textContent    = t('authTabRegister');
     el('authUsername').placeholder   = t('authUserPlaceholder');
-    el('authPassword').placeholder   = t('authPassPlaceholder');
-    el('authSubmit').textContent     = authMode === 'signin' ? t('authSubmitSignin') : t('authSubmitRegister');
+    el('authEmail').placeholder      = t('authEmailPlaceholder');
+    el('authForgotLink').textContent = t('authForgotLink');
+    el('authBackLink').textContent   = t('authBackLink');
+    el('authPassword').placeholder   = authMode === 'reset' ? t('authResetPassPlaceholder') : t('authPassPlaceholder');
+
+    const showEmail    = authMode === 'forgot' || (authMode === 'register' && backendType === 'groq');
+    const showUsername = authMode === 'signin' || authMode === 'register';
+    const showPassword = authMode === 'signin' || authMode === 'register' || authMode === 'reset';
+    const showTabs      = authMode === 'signin' || authMode === 'register';
+    const showForgotLink = authMode === 'signin' && backendType === 'groq';
+    const showBackLink   = authMode === 'forgot' || authMode === 'reset';
+
+    el('authUsername').style.display     = showUsername ? '' : 'none';
+    el('authEmail').style.display         = showEmail ? '' : 'none';
+    el('authPasswordWrap').style.display  = showPassword ? '' : 'none';
+    el('authTabs').style.display          = showTabs ? '' : 'none';
+    el('authForgotRow').style.display     = showForgotLink ? '' : 'none';
+    el('authBackRow').style.display       = showBackLink ? '' : 'none';
+
+    if (authMode === 'signin'){
+      el('authTitle').textContent    = t('authWelcome');
+      el('authSubtitle').textContent = t('authSub');
+      el('authSubmit').textContent   = t('authSubmitSignin');
+    } else if (authMode === 'register'){
+      el('authTitle').textContent    = t('authWelcome');
+      el('authSubtitle').textContent = t('authSub');
+      el('authSubmit').textContent   = t('authSubmitRegister');
+    } else if (authMode === 'forgot'){
+      el('authTitle').textContent    = t('authForgotTitle');
+      el('authSubtitle').textContent = t('authForgotSub');
+      el('authSubmit').textContent   = t('authSubmitForgot');
+    } else if (authMode === 'reset'){
+      el('authTitle').textContent    = t('authResetTitle');
+      el('authSubtitle').textContent = t('authResetSub');
+      el('authSubmit').textContent   = t('authSubmitReset');
+    }
   }
 
   function applyLang(){
@@ -1735,6 +1871,8 @@
   async function initHardware() {
     try {
       const hw = await fetch('/api/hardware').then(r => r.json());
+      backendType = hw.backend;
+      if (el('authScreen').style.display !== 'none') applyAuthLang();
       const badge = document.getElementById('hwBadge');
       if (!badge) return;
 
