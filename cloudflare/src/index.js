@@ -270,11 +270,12 @@ app.post('/api/auth/login', async (c) => {
 app.get('/api/auth/me', async (c) => {
   const p = await requireAuth(c);
   if (!p) return c.json({ error: 'unauthorized' }, 401);
-  const user = await c.env.DB.prepare('SELECT email, email_verified FROM users WHERE id = ?').bind(p.userId).first();
+  const user = await c.env.DB.prepare('SELECT username, email, email_verified FROM users WHERE id = ?').bind(p.userId).first();
+  if (!user) return c.json({ error: 'unauthorized' }, 401);
   return c.json({
-    username: p.username,
-    email: user?.email || null,
-    emailVerified: !!user?.email_verified,
+    username: user.username,
+    email: user.email || null,
+    emailVerified: !!user.email_verified,
   });
 });
 

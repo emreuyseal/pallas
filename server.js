@@ -195,7 +195,9 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', (req, res) => {
   const p = getPayload(req);
   if (!p) return res.status(401).json({ error: 'unauthorized' });
-  res.json({ username: p.username });
+  const found = findUserById(loadUsers(), p.userId);
+  if (!found) return res.status(401).json({ error: 'unauthorized' });
+  res.json({ username: found.user.username });
 });
 
 app.post('/api/profile/password', async (req, res) => {
