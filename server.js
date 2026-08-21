@@ -29,12 +29,26 @@ const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-const DATA_DIR   = process.env.PALLAS_DATA || path.join(__dirname, 'data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const CHATS_DIR  = path.join(DATA_DIR, 'chats');
+const DATA_DIR    = process.env.PALLAS_DATA || path.join(__dirname, 'data');
+const USERS_FILE  = path.join(DATA_DIR, 'users.json');
+const CHATS_DIR   = path.join(DATA_DIR, 'chats');
+const AVATARS_DIR = path.join(DATA_DIR, 'avatars');
 
 fs.mkdirSync(CHATS_DIR, { recursive: true });
+fs.mkdirSync(AVATARS_DIR, { recursive: true });
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}');
+
+const AVATAR_EXT_BY_TYPE = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
+
+function avatarPath(userId, ext) { return path.join(AVATARS_DIR, `${userId}.${ext}`); }
+function findAvatar(userId) {
+  for (const [type, ext] of Object.entries(AVATAR_EXT_BY_TYPE)) {
+    const p = avatarPath(userId, ext);
+    if (fs.existsSync(p)) return { type, path: p };
+  }
+  return null;
+}
 
 function loadUsers() {
   try { return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); }
@@ -177,6 +191,40 @@ app.get('/api/auth/me', (req, res) => {
   const p = getPayload(req);
   if (!p) return res.status(401).json({ error: 'unauthorized' });
   res.json({ username: p.username });
+});
+
+app.post('/api/profile/avatar', express.raw({ type: Object.keys(AVATAR_EXT_BY_TYPE), limit: '2mb' }), (req, res) => {
+  const p = getPayload(req);
+  if (!p) return res.status(401).json({ error: 'unauthorized' });
+
+  const contentType = req.headers['content-type'] || '';
+  const ext = AVATAR_EXT_BY_TYPE[contentType];
+  if (!ext) return res.status(400).json({ error: 'invalid_type' });
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'missing_file' });
+  if (req.body.length > MAX_AVATAR_BYTES) return res.status(400).json({ error: 'too_large' });
+
+  const existing = findAvatar(p.userId);
+  if (existing) fs.unlinkSync(existing.path);
+  fs.writeFileSync(avatarPath(p.userId, ext), req.body);
+  res.json({ ok: true });
+});
+
+app.get('/api/profile/avatar', (req, res) => {
+  const p = getPayload(req);
+  if (!p) return res.status(401).json({ error: 'unauthorized' });
+  const found = findAvatar(p.userId);
+  if (!found) return res.status(404).json({ error: 'not_found' });
+  res.setHeader('Content-Type', found.type);
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.send(fs.readFileSync(found.path));
+});
+
+app.delete('/api/profile/avatar', (req, res) => {
+  const p = getPayload(req);
+  if (!p) return res.status(401).json({ error: 'unauthorized' });
+  const existing = findAvatar(p.userId);
+  if (existing) fs.unlinkSync(existing.path);
+  res.json({ ok: true });
 });
 
 app.get('/api/chats', (req, res) => {

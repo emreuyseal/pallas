@@ -326,7 +326,9 @@
     display:flex;align-items:center;justify-content:center;
     font-family:var(--font-display);font-weight:600;font-size:12px;
     color:var(--accent);flex-shrink:0;
+    cursor:pointer;overflow:hidden;
   }
+  .user-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
   .user-name{
     font-size:12.5px;font-weight:500;flex:1;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -867,7 +869,8 @@
 
       <div class="user-section" id="userSection">
         <div class="user-row">
-          <div class="user-avatar" id="userAvatar">?</div>
+          <div class="user-avatar" id="userAvatar" title="Profil fotoğrafı yükle">?</div>
+          <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp" style="display:none"/>
           <span class="user-name" id="userName"></span>
           <button class="logout-btn" id="logoutBtn" title="Çıkış yap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -985,6 +988,11 @@
       authResetSuccess:'Şifren güncellendi. Şimdi giriş yapabilirsin.',
       authErrResetInvalid:'Bağlantının süresi dolmuş veya geçersiz. Tekrar deneyebilirsin.',
       logoutTitle:'Çıkış yap',
+      avatarUpdated:'Profil fotoğrafı güncellendi',
+      avatarErrType:'Sadece PNG, JPEG veya WEBP kullanabilirsin.',
+      avatarErrSize:'Dosya çok büyük (en fazla 1.5MB).',
+      avatarErrUpload:'Yükleme başarısız oldu, tekrar dene.',
+      avatarUploadTitle:'Profil fotoğrafı yükle',
     },
     en: {
       langToggle:'TR',
@@ -1050,6 +1058,11 @@
       authResetSuccess:'Your password has been updated. You can sign in now.',
       authErrResetInvalid:'That link expired or is invalid. You can request a new one.',
       logoutTitle:'Sign out',
+      avatarUpdated:'Profile photo updated',
+      avatarErrType:'Only PNG, JPEG, or WEBP are supported.',
+      avatarErrSize:'File is too large (max 1.5MB).',
+      avatarErrUpload:'Upload failed, try again.',
+      avatarUploadTitle:'Upload profile photo',
     },
   };
 
@@ -1088,6 +1101,8 @@
   };
 
   let backendType = null;
+  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+  const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
   function newSessionId(){
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -1175,7 +1190,51 @@
   function updateUserDisplay(){
     if (!currentUser) return;
     el('userName').textContent = currentUser;
-    el('userAvatar').textContent = currentUser[0].toUpperCase();
+    showInitialsAvatar();
+    loadAvatar();
+  }
+
+  function showInitialsAvatar(){
+    const avatarEl = el('userAvatar');
+    avatarEl.innerHTML = '';
+    avatarEl.textContent = currentUser ? currentUser[0].toUpperCase() : '?';
+  }
+
+  async function loadAvatar(){
+    try {
+      const res = await fetch('/api/profile/avatar', { headers: authHeaders() });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const avatarEl = el('userAvatar');
+      avatarEl.innerHTML = `<img src="${url}" alt="">`;
+    } catch(_){}
+  }
+
+  async function uploadAvatar(file){
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)){
+      showToast(t('avatarErrType'));
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES){
+      showToast(t('avatarErrSize'));
+      return;
+    }
+    try {
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': file.type },
+        body: file,
+      });
+      if (res.ok){
+        await loadAvatar();
+        showToast(t('avatarUpdated'));
+      } else {
+        showToast(t('avatarErrUpload'));
+      }
+    } catch(_){
+      showToast(t('avatarErrUpload'));
+    }
   }
 
   async function handleAuth(e){
@@ -1324,6 +1383,13 @@
   el('authBackLink').addEventListener('click', ()=> setAuthMode('signin'));
 
   el('logoutBtn').addEventListener('click', logout);
+
+  el('userAvatar').addEventListener('click', ()=> el('avatarInput').click());
+  el('avatarInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) uploadAvatar(file);
+  });
 
   async function loadServerChats(){
     if (!authToken) return;
@@ -1502,6 +1568,7 @@
     el('welcomeSub').textContent     = t('welcomeSub');
     el('composerNote').textContent   = t('composerNote');
     el('logoutBtn').title            = t('logoutTitle');
+    el('userAvatar').title           = t('avatarUploadTitle');
     input.placeholder = t('placeholder');
     document.querySelectorAll('.chip').forEach((chip, i) => {
       const c = t('chips')[i];

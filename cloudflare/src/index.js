@@ -226,6 +226,51 @@ app.get('/api/auth/me', async (c) => {
   return c.json({ username: p.username });
 });
 
+const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+app.post('/api/profile/avatar', async (c) => {
+  const p = await requireAuth(c);
+  if (!p) return c.json({ error: 'unauthorized' }, 401);
+
+  const contentType = c.req.header('content-type') || '';
+  if (!ALLOWED_AVATAR_TYPES.includes(contentType)) return c.json({ error: 'invalid_type' }, 400);
+
+  const buf = await c.req.arrayBuffer();
+  if (buf.byteLength === 0) return c.json({ error: 'missing_file' }, 400);
+  if (buf.byteLength > MAX_AVATAR_BYTES) return c.json({ error: 'too_large' }, 400);
+
+  await c.env.SESSIONS.put(`avatar:${p.userId}`, buf);
+  await c.env.DB.prepare('UPDATE users SET avatar_type = ?, avatar_updated_at = ? WHERE id = ?')
+    .bind(contentType, Date.now(), p.userId).run();
+
+  return c.json({ ok: true });
+});
+
+app.get('/api/profile/avatar', async (c) => {
+  const p = await requireAuth(c);
+  if (!p) return c.json({ error: 'unauthorized' }, 401);
+
+  const user = await c.env.DB.prepare('SELECT avatar_type FROM users WHERE id = ?').bind(p.userId).first();
+  if (!user || !user.avatar_type) return c.json({ error: 'not_found' }, 404);
+
+  const data = await c.env.SESSIONS.get(`avatar:${p.userId}`, 'arrayBuffer');
+  if (!data) return c.json({ error: 'not_found' }, 404);
+
+  return new Response(data, {
+    headers: { 'Content-Type': user.avatar_type, 'Cache-Control': 'private, max-age=300' },
+  });
+});
+
+app.delete('/api/profile/avatar', async (c) => {
+  const p = await requireAuth(c);
+  if (!p) return c.json({ error: 'unauthorized' }, 401);
+  await c.env.SESSIONS.delete(`avatar:${p.userId}`);
+  await c.env.DB.prepare('UPDATE users SET avatar_type = NULL, avatar_updated_at = NULL WHERE id = ?')
+    .bind(p.userId).run();
+  return c.json({ ok: true });
+});
+
 app.get('/api/chats', async (c) => {
   const p = await requireAuth(c);
   if (!p) return c.json({ error: 'unauthorized' }, 401);
